@@ -122,7 +122,7 @@ export default function HomePage() {
   return (
     <>
       {/* MOBILE */}
-      <div className={styles.mobile}>
+      <div className={styles.mobile} data-testid="home-mobile">
         {greeting}
         <WalletCard />
         <div className="row between" style={{ marginTop: 2 }}>
@@ -152,7 +152,7 @@ export default function HomePage() {
       </div>
 
       {/* WEB */}
-      <div className={styles.web}>
+      <div className={styles.web} data-testid="home-web">
         <div className="row top" style={{ gap: 26, alignItems: 'flex-start' }}>
           <div style={{ flex: '0 0 300px' }} className="col">
             <WalletCard web />

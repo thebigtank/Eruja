@@ -93,6 +93,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Link
             href="/wallet"
             className="wallet-pill"
+            data-testid="shell-wallet-pill"
             style={{ textDecoration: 'none' }}
             aria-current={current('/wallet')}
           >

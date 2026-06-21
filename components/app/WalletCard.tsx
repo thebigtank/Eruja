@@ -34,7 +34,7 @@ export function WalletCard({ web = false }: { web?: boolean }) {
         <span className="eyebrow">Eruja wallet</span>
         <Icon name="wallet" size={20} stroke={1.8} style={{ opacity: 0.7 }} />
       </div>
-      <div className="display" style={{ fontSize: web ? 46 : 38 }}>
+      <div className="display" data-testid="wallet-balance" style={{ fontSize: web ? 46 : 38 }}>
         ${balance.toFixed(2)}
       </div>
       <div className="row wrap" style={{ gap: 8 }}>
