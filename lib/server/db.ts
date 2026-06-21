@@ -232,7 +232,7 @@ function seed(): Store {
     },
   ];
 
-  // Ada's tickets: 2 awaiting + 1 in transit + 4 delivered (Home tabs 2/1/4).
+  // Ada's tickets: 2 awaiting + 2 in transit (cargo + last-mile) + 4 delivered (Home tabs 2/2/4).
   const adaTickets: OrderTicket[] = [
     {
       id: 't_4821',

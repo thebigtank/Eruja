@@ -84,11 +84,10 @@ test.describe('dynamic routes resolve their record', () => {
 
   test('/me/pools/[ticket] renders the resolved visual-state bucket', async ({ page }) => {
     await login(page);
-    // t_4801 (crayfish) is in_transit -> cargo bucket (placeholder until its phase ships).
+    // t_4801 (crayfish) is in_transit -> cargo bucket (real H5 cargo view).
     await page.goto('/me/pools/t_4801');
-    await expect(page.getByTestId('tracker-badge')).toHaveText('Cargo in transit');
-    await expect(page.getByTestId('tracker-placeholder')).toContainText(
-      'Cargo in transit view — building next phase',
-    );
+    const web = page.getByTestId('tracker-web');
+    await expect(web.getByTestId('tracker-badge')).toHaveText('Cargo in transit');
+    await expect(web.getByTestId('cargo-header')).toContainText('the bag is full');
   });
 });

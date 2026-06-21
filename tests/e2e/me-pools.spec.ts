@@ -161,9 +161,7 @@ test.describe('Order tracker — waiting (H4)', () => {
     expect(body.error).toBe('feature_disabled');
   });
 
-  test('cargo/delivered tickets render the navigable placeholder, not the waiting room', async ({
-    page,
-  }) => {
+  test('delivered ticket renders the navigable placeholder (until H7 lands)', async ({ page }) => {
     // t_4780 (honey beans) is delivered
     await page.goto('/me/pools/t_4780');
     await expect(page.getByTestId('tracker-badge')).toHaveText('Delivered');
@@ -171,5 +169,87 @@ test.describe('Order tracker — waiting (H4)', () => {
       'Delivered view — building next phase',
     );
     await expect(page.getByTestId('tracker-web')).toHaveCount(0);
+  });
+});
+
+test.describe('Order tracker — cargo (H5)', () => {
+  test.beforeEach(async ({ page }) => {
+    await reset(page);
+    await login(page);
+  });
+
+  test('t_4801 cargo: charge line, hsteps pipeline, cargo route, timeline, Track cargo', async ({
+    page,
+  }) => {
+    const errors = trackErrors(page);
+    await page.goto('/me/pools/t_4801');
+    await page.waitForSelector('[data-testid="tracker-web"]', { timeout: 10_000 });
+    const web = page.getByTestId('tracker-web');
+
+    await expect(web.getByTestId('tracker-badge')).toHaveText('Cargo in transit');
+
+    // Charge line — distinct from the waiting hold; chargedAmount = 10×6.5 = $65
+    await expect(web.getByTestId('cargo-header')).toContainText('the bag is full');
+    await expect(web.getByTestId('cargo-header')).toContainText('Charged $65 · on its way');
+
+    // HSteps: gather/source done, freight active, doorstep upcoming
+    const hsteps = web.getByTestId('cargo-hsteps');
+    await expect(hsteps.locator('.hstep.active')).toHaveText('freight');
+    await expect(hsteps.locator('.hstep.done')).toHaveCount(2);
+
+    // Cargo route — real seeded values
+    await expect(web.getByTestId('cargo-route-line')).toHaveText('Lagos → London');
+    await expect(web.getByTestId('cargo-route')).toContainText('LX4421');
+    await expect(web.getByTestId('cargo-route')).toContainText('London May 4');
+
+    // Transparency timeline carries the cargo events
+    await expect(web.getByTestId('tracker-timeline')).toContainText('Cargo departed Lagos');
+
+    // Deferred action present (non-functional)
+    await expect(web.getByTestId('track-cargo')).toBeVisible();
+    await expect(web.getByTestId('track-cargo')).toBeDisabled();
+
+    expect(errors, errors.join('\n')).toEqual([]);
+  });
+});
+
+test.describe('Order tracker — last-mile (H6)', () => {
+  test.beforeEach(async ({ page }) => {
+    await reset(page);
+    await login(page);
+  });
+
+  test('t_4790 last-mile: arrival window, delivery card, portion, deferred actions', async ({
+    page,
+  }) => {
+    const errors = trackErrors(page);
+    await page.goto('/me/pools/t_4790');
+    await page.waitForSelector('[data-testid="tracker-web"]', { timeout: 10_000 });
+    const web = page.getByTestId('tracker-web');
+
+    await expect(web.getByTestId('tracker-badge')).toHaveText('Last mile');
+
+    // Header: "sorted for you" + arrival window
+    await expect(web.getByTestId('lastmile-header')).toContainText('sorted for you');
+    await expect(web.getByTestId('lastmile-header')).toContainText('Arriving Today, 2–6pm');
+
+    // Delivery-window card — courier / driver / van / hub-out (seeded)
+    const dw = web.getByTestId('delivery-window');
+    await expect(dw).toContainText('DPD');
+    await expect(dw).toContainText('Mo');
+    await expect(dw).toContainText('AB12 CDE');
+    await expect(dw).toContainText('11:42 today');
+
+    // Portion card
+    const portion = web.getByTestId('portion');
+    await expect(portion).toContainText('your portion');
+    await expect(portion).toContainText('10 cups · 7.8kg');
+    await expect(portion).toContainText('vacuum-sealed');
+
+    // Deferred actions present (non-functional)
+    await expect(web.getByTestId('track-courier')).toBeDisabled();
+    await expect(web.getByTestId('reschedule')).toBeDisabled();
+
+    expect(errors, errors.join('\n')).toEqual([]);
   });
 });

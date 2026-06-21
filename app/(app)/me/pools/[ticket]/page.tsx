@@ -3,7 +3,15 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { Icon, PoolPeople, Progress, Timeline } from '@/components/primitives';
+import {
+  HSteps,
+  Icon,
+  PoolPeople,
+  Progress,
+  SceneCargo,
+  SceneDoorstep,
+  Timeline,
+} from '@/components/primitives';
 import { Stepper } from '@/components/app/Stepper';
 import { api } from '@/lib/api/client';
 import { useEruja } from '@/lib/store';
@@ -105,93 +113,9 @@ export default function TrackingPage() {
   const maxMine = total - others; // can't exceed open capacity
   const unitLabel = pool?.unitLabel ?? 'cups';
   const unitPrice = pool?.groupUnitPrice ?? 6.5;
+  const charged = ticket.chargedAmount ?? 0;
 
-  /* ---- non-waiting states: navigable placeholder until their phase ships ---- */
-  if (state !== 'waiting') {
-    return (
-      <div className="col" style={{ gap: 14 }} data-testid="tracker-page">
-        {backRow(state)}
-        <div className="card soft col" style={{ gap: 6 }} data-testid="tracker-placeholder">
-          <span className="eyebrow">{VISUAL_STATE_LABEL[state]}</span>
-          <div className="h-md">{VISUAL_STATE_LABEL[state]} view — building next phase</div>
-          <div className="txt-sm muted">
-            {filled}/{total} seats · this tracker stage lands in a later phase.
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  /* ---- WAITING (H4) ---- */
-  const statusLine = (
-    <div>
-      <div className="eyebrow">the pool is filling</div>
-      <div className="txt" style={{ marginTop: 2 }}>
-        {open} {unitLabel} to ship before it moves
-      </div>
-    </div>
-  );
-
-  const peopleCard = (web: boolean) => (
-    <div className="card" style={{ padding: 16 }}>
-      <div className="row between" style={{ marginBottom: 12 }}>
-        <span className="eyebrow">The pool · {total} seats</span>
-        <span className="urg">{open} to ship</span>
-      </div>
-      <PoolPeople total={total} filled={filled} mine={mine} cols={web ? 16 : 10} />
-      <div className="row" style={{ gap: 16, marginTop: 16 }}>
-        <span className="txt-sm" data-testid="legend-yours">
-          <b style={{ color: 'var(--accent)' }}>●</b> {mine} yours
-        </span>
-        <span className="txt-sm muted">● {others} joined</span>
-        <span className="txt-sm muted">○ {open} open</span>
-      </div>
-      <div style={{ marginTop: 14 }}>
-        <Progress
-          value={filled}
-          max={total}
-          tone={filled / total > 0.72 ? 'accent' : 'green'}
-          left={`${filled} joined`}
-          right={`${total} seats`}
-        />
-      </div>
-    </div>
-  );
-
-  const seatsCard = (
-    <div className="card col" style={{ gap: 12 }}>
-      <div className="row between">
-        <div>
-          <div className="eyebrow">your seats</div>
-          <div className="h-lg" data-testid="seats-value">
-            {mine}{' '}
-            <span className="txt muted" style={{ fontSize: 14 }}>
-              {unitLabel}
-            </span>
-          </div>
-        </div>
-        <Stepper
-          value={mine}
-          min={1}
-          max={maxMine}
-          busy={busy}
-          onDecrement={() => changeSeats(Math.max(1, mine - 1))}
-          onIncrement={() => changeSeats(Math.min(maxMine, mine + 1))}
-        />
-      </div>
-      <hr className="div" />
-      <div className="kv">
-        <span className="k">
-          On hold · {mine}×${unitFmt(unitPrice)}
-        </span>
-        <b className="price-mono accent" data-testid="tracker-hold">
-          {money(ticket.holdAmount)}
-        </b>
-      </div>
-      <div className="txt-sm muted">Charged from your wallet the moment the pool fills.</div>
-    </div>
-  );
-
+  // Transparency feed — shared across states.
   const feed = (
     <div className="col" style={{ gap: 8 }} data-testid="tracker-timeline">
       <span className="eyebrow">Live transparency feed</span>
@@ -199,40 +123,303 @@ export default function TrackingPage() {
     </div>
   );
 
-  const leave = (
+  // Deferred action — present but non-functional (no backing endpoint in the contract).
+  const deferred = (label: string, caption: string, testid: string, accent?: boolean) => (
     <div className="col" style={{ gap: 4 }}>
-      <button type="button" className="btn block" disabled data-testid="leave-btn">
-        Leave pool · coming soon
+      <button
+        type="button"
+        className={`btn block ${accent ? 'accent' : ''}`}
+        disabled
+        data-testid={testid}
+      >
+        {label}
       </button>
-      <div className="center txt-sm muted">enabled at backend once refund logic ships</div>
+      <div className="center txt-sm muted">{caption}</div>
     </div>
   );
 
-  return (
-    <div data-testid="tracker-page">
-      {/* MOBILE */}
-      <div className={styles.mobile} data-testid="tracker-mobile">
-        {backRow(state)}
-        {statusLine}
-        {peopleCard(false)}
-        {seatsCard}
-        {feed}
-        {leave}
-      </div>
+  const viewPool = (
+    <Link href={`/pool/${ticket.poolId}`} className="btn ghost block" data-testid="view-pool">
+      View pool
+    </Link>
+  );
 
-      {/* WEB */}
-      <div className={styles.web} data-testid="tracker-web">
-        {backRow(state)}
-        {statusLine}
-        <div className="row top" style={{ gap: 26, marginTop: 14 }}>
-          <div style={{ flex: '0 0 380px' }} className="col">
-            {peopleCard(true)}
-            {seatsCard}
-            {leave}
+  /* ============================== WAITING (H4) ============================== */
+  if (state === 'waiting') {
+    const statusLine = (
+      <div>
+        <div className="eyebrow">the pool is filling</div>
+        <div className="txt" style={{ marginTop: 2 }}>
+          {open} {unitLabel} to ship before it moves
+        </div>
+      </div>
+    );
+
+    const peopleCard = (web: boolean) => (
+      <div className="card" style={{ padding: 16 }}>
+        <div className="row between" style={{ marginBottom: 12 }}>
+          <span className="eyebrow">The pool · {total} seats</span>
+          <span className="urg">{open} to ship</span>
+        </div>
+        <PoolPeople total={total} filled={filled} mine={mine} cols={web ? 16 : 10} />
+        <div className="row" style={{ gap: 16, marginTop: 16 }}>
+          <span className="txt-sm" data-testid="legend-yours">
+            <b style={{ color: 'var(--accent)' }}>●</b> {mine} yours
+          </span>
+          <span className="txt-sm muted">● {others} joined</span>
+          <span className="txt-sm muted">○ {open} open</span>
+        </div>
+        <div style={{ marginTop: 14 }}>
+          <Progress
+            value={filled}
+            max={total}
+            tone={filled / total > 0.72 ? 'accent' : 'green'}
+            left={`${filled} joined`}
+            right={`${total} seats`}
+          />
+        </div>
+      </div>
+    );
+
+    const seatsCard = (
+      <div className="card col" style={{ gap: 12 }}>
+        <div className="row between">
+          <div>
+            <div className="eyebrow">your seats</div>
+            <div className="h-lg" data-testid="seats-value">
+              {mine}{' '}
+              <span className="txt muted" style={{ fontSize: 14 }}>
+                {unitLabel}
+              </span>
+            </div>
           </div>
-          <div style={{ flex: 1 }} className="col">
-            {feed}
+          <Stepper
+            value={mine}
+            min={1}
+            max={maxMine}
+            busy={busy}
+            onDecrement={() => changeSeats(Math.max(1, mine - 1))}
+            onIncrement={() => changeSeats(Math.min(maxMine, mine + 1))}
+          />
+        </div>
+        <hr className="div" />
+        <div className="kv">
+          <span className="k">
+            On hold · {mine}×${unitFmt(unitPrice)}
+          </span>
+          <b className="price-mono accent" data-testid="tracker-hold">
+            {money(ticket.holdAmount)}
+          </b>
+        </div>
+        <div className="txt-sm muted">Charged from your wallet the moment the pool fills.</div>
+      </div>
+    );
+
+    const leave = (
+      <div className="col" style={{ gap: 4 }}>
+        <button type="button" className="btn block" disabled data-testid="leave-btn">
+          Leave pool · coming soon
+        </button>
+        <div className="center txt-sm muted">enabled at backend once refund logic ships</div>
+      </div>
+    );
+
+    return (
+      <div data-testid="tracker-page">
+        <div className={styles.mobile} data-testid="tracker-mobile">
+          {backRow(state)}
+          {statusLine}
+          {peopleCard(false)}
+          {seatsCard}
+          {feed}
+          {leave}
+        </div>
+        <div className={styles.web} data-testid="tracker-web">
+          {backRow(state)}
+          {statusLine}
+          <div className="row top" style={{ gap: 26, marginTop: 14 }}>
+            <div style={{ flex: '0 0 380px' }} className="col">
+              {peopleCard(true)}
+              {seatsCard}
+              {leave}
+            </div>
+            <div style={{ flex: 1 }} className="col">
+              {feed}
+            </div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ============================== CARGO (H5) ============================== */
+  if (state === 'cargo') {
+    const header = (
+      <div className="card ink col" style={{ gap: 6 }} data-testid="cargo-header">
+        <span className="eyebrow">the bag is full</span>
+        <div className="txt-sm">Charged {money(charged)} · on its way</div>
+      </div>
+    );
+
+    const steps = (
+      <div data-testid="cargo-hsteps">
+        <HSteps steps={ticket.hsteps.steps} active={ticket.hsteps.active} />
+      </div>
+    );
+
+    const route = (
+      <div className="card col" style={{ gap: 10 }} data-testid="cargo-route">
+        <div className="illo-tile" style={{ height: 130 }}>
+          <SceneCargo />
+        </div>
+        <div className="kv">
+          <span className="k">Route</span>
+          <b data-testid="cargo-route-line">
+            {ticket.cargoRoute?.from} → {ticket.cargoRoute?.to}
+          </b>
+        </div>
+        <hr className="div" />
+        <div className="kv">
+          <span className="k">Flight</span>
+          <span className="v">{ticket.cargoRoute?.flight}</span>
+        </div>
+        <hr className="div" />
+        <div className="kv">
+          <span className="k">ETA</span>
+          <span className="v">{ticket.cargoRoute?.eta}</span>
+        </div>
+      </div>
+    );
+
+    const track = deferred('Track cargo', 'live tracking coming soon', 'track-cargo', true);
+
+    return (
+      <div data-testid="tracker-page">
+        <div className={styles.mobile} data-testid="tracker-mobile">
+          {backRow(state)}
+          {header}
+          {steps}
+          {route}
+          {feed}
+          {track}
+          {viewPool}
+        </div>
+        <div className={styles.web} data-testid="tracker-web">
+          {backRow(state)}
+          {header}
+          <div className="row top" style={{ gap: 26, marginTop: 14 }}>
+            <div style={{ flex: '0 0 340px' }} className="col">
+              {route}
+              {steps}
+              {track}
+              {viewPool}
+            </div>
+            <div style={{ flex: 1 }} className="col">
+              {feed}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ============================== LAST-MILE (H6) ============================== */
+  if (state === 'last-mile') {
+    const dw = ticket.deliveryWindow;
+    const portion = ticket.portion;
+
+    const header = (
+      <div data-testid="lastmile-header">
+        <div className="eyebrow">sorted for you</div>
+        <div className="h-lg" style={{ marginTop: 2 }}>
+          Arriving {dw?.date}, {dw?.slot}
+        </div>
+      </div>
+    );
+
+    const windowCard = (
+      <div className="card accent-soft col" style={{ gap: 10 }} data-testid="delivery-window">
+        <div className="illo-tile" style={{ height: 120 }}>
+          <SceneDoorstep />
+        </div>
+        <div className="kv">
+          <span className="k">Courier</span>
+          <b>{dw?.courier}</b>
+        </div>
+        <hr className="div" />
+        <div className="kv">
+          <span className="k">Driver</span>
+          <span className="v">{dw?.driver}</span>
+        </div>
+        <hr className="div" />
+        <div className="kv">
+          <span className="k">Van</span>
+          <span className="v">{dw?.van}</span>
+        </div>
+        <hr className="div" />
+        <div className="kv">
+          <span className="k">Left the hub</span>
+          <span className="v">{dw?.hubOut}</span>
+        </div>
+      </div>
+    );
+
+    const portionCard = (
+      <div className="card soft col" style={{ gap: 4 }} data-testid="portion">
+        <span className="eyebrow">your portion</span>
+        <div className="h-lg">
+          {portion?.units} · {portion?.kg}kg
+        </div>
+        <div className="txt-sm muted">{portion?.packaging}</div>
+      </div>
+    );
+
+    const actions = (
+      <div className="col" style={{ gap: 10 }}>
+        {deferred('Track courier', 'live tracking coming soon', 'track-courier', true)}
+        {deferred('Reschedule delivery', 'rescheduling coming soon', 'reschedule')}
+      </div>
+    );
+
+    return (
+      <div data-testid="tracker-page">
+        <div className={styles.mobile} data-testid="tracker-mobile">
+          {backRow(state)}
+          {header}
+          {windowCard}
+          {portionCard}
+          {feed}
+          {actions}
+          {viewPool}
+        </div>
+        <div className={styles.web} data-testid="tracker-web">
+          {backRow(state)}
+          {header}
+          <div className="row top" style={{ gap: 26, marginTop: 14 }}>
+            <div style={{ flex: '0 0 340px' }} className="col">
+              {windowCard}
+              {actions}
+              {viewPool}
+            </div>
+            <div style={{ flex: 1 }} className="col">
+              {portionCard}
+              {feed}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ============================== DELIVERED (H7) — placeholder until next commit ===== */
+  return (
+    <div className="col" style={{ gap: 14 }} data-testid="tracker-page">
+      {backRow(state)}
+      <div className="card soft col" style={{ gap: 6 }} data-testid="tracker-placeholder">
+        <span className="eyebrow">{VISUAL_STATE_LABEL[state]}</span>
+        <div className="h-md">{VISUAL_STATE_LABEL[state]} view — building next phase</div>
+        <div className="txt-sm muted">
+          {filled}/{total} seats · this tracker stage lands in a later phase.
         </div>
       </div>
     </div>
