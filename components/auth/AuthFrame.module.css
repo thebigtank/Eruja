@@ -1,0 +1,52 @@
+.frame {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* thin aso-oke brand marker above the frame */
+.marker {
+  width: 64px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* shown only on web (>= 880px) */
+.webOnly {
+  display: none;
+}
+
+@media (min-width: 880px) {
+  .grid {
+    grid-template-columns: 1.05fr 1fr;
+    gap: 40px;
+    align-items: center;
+  }
+  .brand {
+    background: var(--paper-2);
+    border-radius: var(--r-lg);
+    padding: 30px;
+  }
+  .webOnly {
+    display: flex;
+  }
+}

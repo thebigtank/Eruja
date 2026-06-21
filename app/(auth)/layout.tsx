@@ -9,7 +9,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         padding: 24,
       }}
     >
-      <div style={{ width: '100%', maxWidth: 420 }}>{children}</div>
+      {children}
     </div>
   );
 }

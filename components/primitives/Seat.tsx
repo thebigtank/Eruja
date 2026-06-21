@@ -48,9 +48,11 @@ export interface AvatarStackProps {
   count?: number;
   total?: number;
   max?: number;
+  /** Custom label for the trailing "+more" chip (e.g. "+2.3k"); overrides the numeric count. */
+  moreLabel?: string;
 }
 
-export function AvatarStack({ count = 5, total, max = 5 }: AvatarStackProps) {
+export function AvatarStack({ count = 5, total, max = 5, moreLabel }: AvatarStackProps) {
   const show = Math.min(count, max);
   const seats = [];
   for (let i = 0; i < show; i++) {
@@ -60,10 +62,11 @@ export function AvatarStack({ count = 5, total, max = 5 }: AvatarStackProps) {
       </div>,
     );
   }
+  const more = moreLabel ?? (total && total > show ? `+${total - show}` : null);
   return (
     <div className="stack">
       {seats}
-      {total && total > show ? <div className="more">+{total - show}</div> : null}
+      {more ? <div className="more">{more}</div> : null}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { api } from './api/client';
-import type { Cart, Hub, User, WalletState } from './types';
+import type { Cart, Hub, RegisterBody, User, WalletState } from './types';
 
 /**
  * Session / hub / wallet / cart UI state, hydrated from the client seam (lib/api/client).
@@ -24,6 +24,7 @@ interface ErujaState {
   setActiveHub: (hubId: string) => void;
 
   login: (email: string, password: string) => Promise<User>;
+  register: (body: RegisterBody) => Promise<User>;
   logout: () => Promise<void>;
   /** Hydrate everything the shell needs after auth. */
   bootstrap: () => Promise<void>;
@@ -73,6 +74,13 @@ export const useEruja = create<ErujaState>((set, get) => ({
   login: async (email, password) => {
     const user = await api.auth.login({ email, password });
     set({ user, activeHubId: user.hubId });
+    await get().bootstrap();
+    return user;
+  },
+
+  register: async (body) => {
+    const user = await api.auth.register(body);
+    set({ user, activeHubId: body.hubId });
     await get().bootstrap();
     return user;
   },
