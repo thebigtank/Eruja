@@ -1,0 +1,38 @@
+.mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.web {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .mobile {
+    display: none;
+  }
+  .web {
+    display: block;
+  }
+}
+
+.backRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--ink-2);
+  font-family: var(--font-ui);
+  font-size: 13px;
+}
