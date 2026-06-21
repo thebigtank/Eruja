@@ -22,6 +22,7 @@ interface ErujaState {
   loadWallet: () => Promise<void>;
   topUp: (amount: number) => Promise<WalletState>;
   loadCart: () => Promise<void>;
+  addToCart: (poolId: string, quantity: number) => Promise<Cart>;
   setActiveHub: (hubId: string) => void;
 
   login: (email: string, password: string) => Promise<User>;
@@ -74,6 +75,12 @@ export const useEruja = create<ErujaState>((set, get) => ({
     } catch {
       set({ cart: null });
     }
+  },
+
+  addToCart: async (poolId, quantity) => {
+    const cart = await api.cart.addLine({ poolId, quantity });
+    set({ cart }); // propagates to the shell cart badge
+    return cart;
   },
 
   setActiveHub: (hubId) => set({ activeHubId: hubId }),
