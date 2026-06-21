@@ -97,12 +97,17 @@ export const useEruja = create<ErujaState>((set, get) => ({
   },
 }));
 
-/** Expose the store for e2e assertions (harmless in prod; read-only access). */
+/**
+ * Expose the store for e2e assertions. Gated so it NEVER ships in a real production
+ * build: attached only in dev, or when the e2e build sets NEXT_PUBLIC_E2E=1
+ * (Playwright's webServer does; real `next build` does not).
+ */
 declare global {
   interface Window {
     __eruja?: typeof useEruja;
   }
 }
-if (typeof window !== 'undefined') {
+const E2E_SEAM = process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_E2E === '1';
+if (typeof window !== 'undefined' && E2E_SEAM) {
   window.__eruja = useEruja;
 }

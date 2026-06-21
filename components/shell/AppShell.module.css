@@ -4,6 +4,13 @@
   flex-direction: column;
 }
 
+.loading {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .topbar {
   position: sticky;
   top: 0;
@@ -29,9 +36,35 @@
 }
 
 .right {
-  display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.iconLink {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.cartBadge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .main {
@@ -53,8 +86,22 @@
   text-decoration: none;
 }
 
+/* responsive show/hide */
+.mobileOnly {
+  display: flex;
+}
+.webOnly {
+  display: none;
+}
+
 @media (min-width: 900px) {
   .desktopNav {
+    display: flex;
+  }
+  .mobileOnly {
+    display: none;
+  }
+  .webOnly {
     display: flex;
   }
   .tabbarWrap {

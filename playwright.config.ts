@@ -25,5 +25,7 @@ export default defineConfig({
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
+    // Enables the read-only window.__eruja seam in the production e2e build only.
+    env: { NEXT_PUBLIC_E2E: '1' },
   },
 });
