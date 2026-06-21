@@ -20,3 +20,5 @@ export {
   type ProductThumbProps,
 } from './ProductIllo';
 export { SceneSourcing, SceneCargo, SceneDoorstep, SceneMap } from './Scenes';
+export { Progress, type ProgressProps, type ProgressTone } from './Progress';
+export { PoolCard, type PoolCardProps } from './PoolCard';
