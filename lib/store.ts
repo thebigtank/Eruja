@@ -96,3 +96,13 @@ export const useEruja = create<ErujaState>((set, get) => ({
     set({ hydrated: true });
   },
 }));
+
+/** Expose the store for e2e assertions (harmless in prod; read-only access). */
+declare global {
+  interface Window {
+    __eruja?: typeof useEruja;
+  }
+}
+if (typeof window !== 'undefined') {
+  window.__eruja = useEruja;
+}

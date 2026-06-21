@@ -37,7 +37,7 @@ test.describe('public pages render without errors', () => {
   test('register /register', async ({ page }) => {
     const errors = trackErrors(page);
     await page.goto('/register');
-    await expect(page.getByRole('heading', { name: /join your hub/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /pooled together/i })).toBeVisible();
     expect(errors, errors.join('\n')).toEqual([]);
   });
 });
