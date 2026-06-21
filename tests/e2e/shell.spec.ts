@@ -64,7 +64,8 @@ test.describe('shell nav — desktop top nav', () => {
 
     await page.getByRole('link', { name: 'Discover' }).click();
     await expect(page).toHaveURL(/\/discover$/);
-    await expect(page.getByRole('heading', { name: 'Discover' })).toBeVisible();
+    // Real Discover screen renders the hub picker ("Your hub").
+    await expect(page.getByTestId('discover-web').getByText('Your hub')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Discover' })).toHaveAttribute(
       'aria-current',
       'page',

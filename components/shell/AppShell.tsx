@@ -99,7 +99,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             <Icon name="wallet" size={16} stroke={2} />${(wallet?.balance ?? 0).toFixed(2)}
           </Link>
-          <span className="chip accent active">
+          <span className="chip accent active" data-testid="shell-hub-chip">
             <Icon
               name="pin"
               size={13}

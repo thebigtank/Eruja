@@ -125,6 +125,7 @@ export default function DiscoverPage() {
         {hubPicker}
         <div
           className="card accent-soft"
+          data-testid="discover-hero"
           style={{ padding: 0, overflow: 'hidden', margin: '12px 0 18px' }}
         >
           <div className="row" style={{ gap: 0 }}>
