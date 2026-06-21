@@ -28,7 +28,7 @@ test.describe('My pools list (/me/pools)', () => {
     await login(page);
   });
 
-  test('renders title, sub, bucket tabs (2/1/4), and Awaiting cards linking to the tracker', async ({
+  test('renders title, sub, bucket tabs (2/2/4), and Awaiting cards linking to the tracker', async ({
     page,
   }) => {
     const errors = trackErrors(page);
@@ -56,7 +56,7 @@ test.describe('My pools list (/me/pools)', () => {
     expect(errors, errors.join('\n')).toEqual([]);
   });
 
-  test('tab switch: Delivered shows 4 cards, In transit shows the 1 crayfish ticket', async ({
+  test('tab switch: Delivered shows 4 cards, In transit shows 2 (crayfish + rice)', async ({
     page,
   }) => {
     await page.goto('/me/pools');
@@ -161,14 +161,15 @@ test.describe('Order tracker — waiting (H4)', () => {
     expect(body.error).toBe('feature_disabled');
   });
 
-  test('delivered ticket renders the navigable placeholder (until H7 lands)', async ({ page }) => {
-    // t_4780 (honey beans) is delivered
-    await page.goto('/me/pools/t_4780');
-    await expect(page.getByTestId('tracker-badge')).toHaveText('Delivered');
-    await expect(page.getByTestId('tracker-placeholder')).toContainText(
-      'Delivered view — building next phase',
-    );
-    await expect(page.getByTestId('tracker-web')).toHaveCount(0);
+  test('every bucket ticket resolves to a real state — no placeholder remains', async ({
+    page,
+  }) => {
+    // one ticket per visual state: waiting, cargo, last-mile, delivered
+    for (const id of ['t_4821', 't_4801', 't_4790', 't_4780']) {
+      await page.goto(`/me/pools/${id}`);
+      await page.waitForSelector('[data-testid="tracker-web"]', { timeout: 10_000 });
+      await expect(page.getByTestId('tracker-placeholder')).toHaveCount(0);
+    }
   });
 });
 
@@ -251,5 +252,73 @@ test.describe('Order tracker — last-mile (H6)', () => {
     await expect(web.getByTestId('reschedule')).toBeDisabled();
 
     expect(errors, errors.join('\n')).toEqual([]);
+  });
+});
+
+test.describe('Order tracker — delivered (H7)', () => {
+  test.beforeEach(async ({ page }) => {
+    await reset(page);
+    await login(page);
+  });
+
+  test('t_4780 delivered: celebration, per-ticket savings, wallet stats, stars, next links', async ({
+    page,
+  }) => {
+    const errors = trackErrors(page);
+    await page.goto('/me/pools/t_4780');
+    await page.waitForSelector('[data-testid="tracker-web"]', { timeout: 10_000 });
+    const web = page.getByTestId('tracker-web');
+
+    await expect(web.getByTestId('tracker-badge')).toHaveText('Delivered');
+    await expect(web.getByTestId('delivered-header')).toContainText('Time to cook.');
+
+    // Per-ticket savings ($45 for t_4780)
+    await expect(web.getByTestId('delivered-savings')).toContainText('You saved');
+    await expect(web.getByTestId('delivered-savings')).toContainText('$45');
+
+    // Wallet stats (savedTotal 259 / poolsJoined 4 / referred 2)
+    await expect(web.getByTestId('stat-saved')).toHaveText('$259');
+    await expect(web.getByTestId('delivered-stats')).toContainText('4');
+    await expect(web.getByTestId('delivered-stats')).toContainText('2');
+
+    // Stars render (t_4780 preset rating = 5)
+    await expect(web.getByTestId('stars')).toHaveAttribute('data-value', '5');
+
+    // Real "what's next" links
+    await expect(web.getByTestId('find-next')).toHaveAttribute('href', '/discover');
+    await expect(web.getByTestId('suggest-item')).toHaveAttribute('href', '/suggest');
+
+    expect(errors, errors.join('\n')).toEqual([]);
+  });
+
+  test('rating mutation: click 5 stars → PATCH persists, UI reflects it + Thanks', async ({
+    page,
+  }) => {
+    // t_4762 starts at rating 4
+    await page.goto('/me/pools/t_4762');
+    await page.waitForSelector('[data-testid="tracker-web"]', { timeout: 10_000 });
+    const web = page.getByTestId('tracker-web');
+    const stars = web.getByTestId('stars');
+
+    await expect(stars).toHaveAttribute('data-value', '4');
+
+    await stars.getByRole('button', { name: 'Rate 5 stars' }).click();
+
+    await expect(stars).toHaveAttribute('data-value', '5');
+    await expect(web.getByTestId('rating-thanks')).toBeVisible();
+
+    // Persisted server-side: a fresh GET returns rating 5
+    const t = (await (await page.request.get('/api/me/tickets/t_4762')).json()) as {
+      rating: number;
+    };
+    expect(t.rating).toBe(5);
+
+    // And survives a reload (re-resolve from the backend)
+    await page.reload();
+    await page.waitForSelector('[data-testid="tracker-web"]', { timeout: 10_000 });
+    await expect(page.getByTestId('tracker-web').getByTestId('stars')).toHaveAttribute(
+      'data-value',
+      '5',
+    );
   });
 });

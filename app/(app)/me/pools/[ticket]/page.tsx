@@ -1,15 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
   HSteps,
   Icon,
+  PoolCard,
   PoolPeople,
   Progress,
   SceneCargo,
   SceneDoorstep,
+  Stars,
   Timeline,
 } from '@/components/primitives';
 import { Stepper } from '@/components/app/Stepper';
@@ -33,12 +35,15 @@ const BADGE_TONE: Record<TicketVisualState, string> = {
 export default function TrackingPage() {
   const { ticket: ticketId } = useParams<{ ticket: string }>();
   const router = useRouter();
-  const { setTicketSeats } = useEruja();
+  const { wallet, hubs, activeHubId, setTicketSeats, setTicketRating } = useEruja();
 
   const [ticket, setTicket] = useState<OrderTicket | null>(null);
   const [pool, setPool] = useState<Pool | null>(null);
+  const [nextPools, setNextPools] = useState<Pool[]>([]);
   const [missing, setMissing] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [thanks, setThanks] = useState(false);
+  const thanksTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     api.tickets
@@ -52,6 +57,21 @@ export default function TrackingPage() {
       })
       .catch(() => setMissing(true));
   }, [ticketId]);
+
+  // Open pools for the delivered "what's next" suggestions (real links to /pool/:id).
+  useEffect(() => {
+    api.pools
+      .list()
+      .then(setNextPools)
+      .catch(() => {});
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (thanksTimer.current) clearTimeout(thanksTimer.current);
+    },
+    [],
+  );
 
   function goBack() {
     if (typeof window !== 'undefined' && window.history.length > 1) router.back();
@@ -67,6 +87,15 @@ export default function TrackingPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function rate(stars: number) {
+    if (!ticket) return;
+    const updated = await setTicketRating(ticket.id, stars);
+    setTicket(updated);
+    setThanks(true);
+    if (thanksTimer.current) clearTimeout(thanksTimer.current);
+    thanksTimer.current = setTimeout(() => setThanks(false), 1500);
   }
 
   const backRow = (state: TicketVisualState | null) => (
@@ -411,15 +440,114 @@ export default function TrackingPage() {
     );
   }
 
-  /* ============================== DELIVERED (H7) — placeholder until next commit ===== */
+  /* ============================== DELIVERED (H7) ============================== */
+  const hubName = hubs.find((h) => h.id === activeHubId)?.name ?? 'London';
+
+  const celebration = (
+    <div className="col" style={{ gap: 12 }}>
+      <div className="illo-tile" style={{ height: 130 }}>
+        <SceneDoorstep />
+      </div>
+      <div className="card ink col" style={{ gap: 6 }} data-testid="delivered-header">
+        <span className="eyebrow">delivered</span>
+        <div className="display" style={{ fontSize: 28 }}>
+          Time to cook.
+        </div>
+      </div>
+    </div>
+  );
+
+  const savingsCard = (
+    <div className="card green-soft" data-testid="delivered-savings">
+      You saved <b>{money(ticket.savings ?? 0)}</b> on this pool
+    </div>
+  );
+
+  const ratingCard = (
+    <div className="card col" style={{ gap: 8 }} data-testid="rating-card">
+      <span className="eyebrow">How was it?</span>
+      <Stars value={ticket.rating ?? 0} onRate={rate} />
+      {thanks ? (
+        <span className="txt-sm accent bold" data-testid="rating-thanks">
+          Thanks ✓
+        </span>
+      ) : null}
+    </div>
+  );
+
+  const statsCard = (
+    <div className="card" data-testid="delivered-stats">
+      <div className="kv">
+        <span className="k">Saved all-time</span>
+        <span className="v accent" data-testid="stat-saved">
+          ${wallet?.savedTotal ?? 0}
+        </span>
+      </div>
+      <hr className="div" />
+      <div className="kv">
+        <span className="k">Pools joined</span>
+        <span className="v">{wallet?.poolsJoined ?? 0}</span>
+      </div>
+      <hr className="div" />
+      <div className="kv">
+        <span className="k">Friends referred</span>
+        <span className="v">{wallet?.referred ?? 0}</span>
+      </div>
+    </div>
+  );
+
+  const openSuggestions = nextPools
+    .filter((p) => p.id !== ticket.poolId && (p.status === 'awaiting' || p.status === 'filling'))
+    .slice(0, 2);
+
+  const nextCard = (
+    <div className="col" style={{ gap: 10 }} data-testid="next-card">
+      <span className="eyebrow">what&apos;s next</span>
+      {openSuggestions.map((p) => (
+        <PoolCard
+          key={p.id}
+          name={p.name}
+          kind={p.productKind}
+          where={`${hubName} hub`}
+          retail={p.retailPackPrice}
+          group={p.groupPackPrice}
+          filled={p.takenSeats}
+          total={p.totalSeats}
+          urg={p.urgency}
+          href={`/pool/${p.id}`}
+        />
+      ))}
+      <Link href="/discover" className="btn accent block" data-testid="find-next">
+        Find your next pool
+      </Link>
+      <Link href="/suggest" className="btn block" data-testid="suggest-item">
+        <Icon name="sparkle" size={16} stroke={1.9} /> Suggest an item
+      </Link>
+    </div>
+  );
+
   return (
-    <div className="col" style={{ gap: 14 }} data-testid="tracker-page">
-      {backRow(state)}
-      <div className="card soft col" style={{ gap: 6 }} data-testid="tracker-placeholder">
-        <span className="eyebrow">{VISUAL_STATE_LABEL[state]}</span>
-        <div className="h-md">{VISUAL_STATE_LABEL[state]} view — building next phase</div>
-        <div className="txt-sm muted">
-          {filled}/{total} seats · this tracker stage lands in a later phase.
+    <div data-testid="tracker-page">
+      <div className={styles.mobile} data-testid="tracker-mobile">
+        {backRow(state)}
+        {celebration}
+        {savingsCard}
+        {ratingCard}
+        {statsCard}
+        {nextCard}
+      </div>
+      <div className={styles.web} data-testid="tracker-web">
+        {backRow(state)}
+        <div className="row top" style={{ gap: 26, marginTop: 14 }}>
+          <div style={{ flex: 1 }} className="col">
+            {celebration}
+            {savingsCard}
+            {ratingCard}
+          </div>
+          <div style={{ flex: '0 0 320px' }} className="col">
+            {statsCard}
+            {nextCard}
+          </div>
         </div>
       </div>
     </div>

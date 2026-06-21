@@ -36,6 +36,8 @@ interface ErujaState {
   checkout: () => Promise<CheckoutResponse>;
   /** Waiting-room add/release seats. Rebalances the wallet HOLD; resyncs the store wallet. */
   setTicketSeats: (id: string, quantity: number) => Promise<OrderTicket>;
+  /** Rate a delivered ticket (H7). Returns the updated ticket; no wallet impact. */
+  setTicketRating: (id: string, stars: number) => Promise<OrderTicket>;
   setActiveHub: (hubId: string) => void;
 
   login: (email: string, password: string) => Promise<User>;
@@ -129,6 +131,10 @@ export const useEruja = create<ErujaState>((set, get) => ({
     // so resync it to keep the shell (held) in sync.
     await get().loadWallet();
     return ticket;
+  },
+
+  setTicketRating: async (id, stars) => {
+    return api.tickets.rate(id, { stars });
   },
 
   setActiveHub: (hubId) => set({ activeHubId: hubId }),

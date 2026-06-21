@@ -24,3 +24,4 @@ export { Progress, type ProgressProps, type ProgressTone } from './Progress';
 export { PoolCard, type PoolCardProps } from './PoolCard';
 export { Timeline, type TimelineProps } from './Timeline';
 export { HSteps, type HStepsProps } from './HSteps';
+export { Stars, type StarsProps } from './Stars';
