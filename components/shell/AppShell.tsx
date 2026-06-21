@@ -45,6 +45,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const hubName = hubs.find((h) => h.id === activeHubId)?.name ?? 'London';
   const cartCount = cart?.lines.length ?? 0;
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
+  // Discover owns the browse funnel, so /pool/* highlights it too.
+  const navActive = (href: string) =>
+    isActive(href) || (href === '/discover' && pathname.startsWith('/pool'));
   const current = (href: string) => (isActive(href) ? 'page' : undefined);
 
   if (!hydrated || !user) {
@@ -79,8 +82,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={n.href}
                 href={n.href}
-                className={isActive(n.href) ? 'active' : ''}
-                aria-current={current(n.href)}
+                className={navActive(n.href) ? 'active' : ''}
+                aria-current={navActive(n.href) ? 'page' : undefined}
               >
                 {n.label}
               </Link>
