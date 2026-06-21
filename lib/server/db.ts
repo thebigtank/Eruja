@@ -131,7 +131,8 @@ function seed(): Store {
   ];
 
   const suggestions: Suggestion[] = [
-    suggestion('s_flour', 'Plantain Flour · 5kg', 'flour', 'grains', 36, false),
+    // Phase-9 tweak: 39 (threshold − 1) so a single live vote graduates it (H8 demo moment).
+    suggestion('s_flour', 'Plantain Flour · 5kg', 'flour', 'grains', 39, false),
     suggestion('s_cocoyam', 'Cocoyam Flour', 'cocoyam', 'grains', 42, true),
     suggestion('s_suya', 'Suya Spice · 1kg', 'suya', 'spices', 24, true),
     suggestion('s_garri', 'Garri Ijebu · 25kg', 'garri', 'grains', 11, false),
