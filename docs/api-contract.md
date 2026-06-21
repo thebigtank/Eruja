@@ -46,8 +46,14 @@ Pools carry **two** price pairs (both are real, derived from the storyboard):
 - **Pack prices** (`retailPackPrice` / `groupPackPrice`) — the whole-pack price on pool
   **cards**, e.g. `$120 / $45`. Per-pool.
 - **Per-unit prices** (`retailUnitPrice` / `groupUnitPrice`) — the price per seat/"cup"
-  in the **seat selector** and cart, e.g. `$12 / $6.50`. **Universal across pools** (the
-  storyboard's `RETAIL_PER` / `GROUP_PER` module constants). `unitLabel` is `"cups"`.
+  in the **seat selector** and cart, e.g. `$12 / $6.50`. These are **per-Pool fields**
+  (`PoolSchema.retailUnitPrice` / `groupUnitPrice`), not a global constant. `unitLabel`
+  is `"cups"`.
+
+> **Seed note:** the uniform `$12 / $6.50` per-unit price across all seeded pools is
+> **demo seed data**, not a system pricing rule — it merely mirrors the storyboard's
+> `RETAIL_PER` / `GROUP_PER` constants. The real backend sets the per-unit price **per
+> product**; the field is and must remain per-Pool.
 
 Pack price and `perUnit × seats` intentionally do **not** reconcile — they are
 independent display values.
