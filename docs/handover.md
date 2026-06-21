@@ -10,19 +10,24 @@ Snapshot for a fresh session. Pair with `CLAUDE.md` (conventions) and
 - IA locked; responsive `(app)` shell + auth guard: **done**.
 - Navigable route skeleton for every `(app)` route: **done**.
 - **Screens built so far:** Home (H0) ✓ · Discover (H1) ✓ · Pool detail + seat selector
-  (H2) ✓ · Cart + wallet checkout (H3) ✓ · My-pools list ✓ · **order tracker COMPLETE —
-  all 4 visual states real (H4 waiting · H5 cargo · H6 last-mile · H7 delivered) ✓**. Every
-  `OrderStatus` now resolves to a real view; no placeholder remains. Rating (H7) wired via
-  `store.setTicketRating`. **Pending:** Suggest (H8), Wallet, Notifications.
-- **48 Playwright tests green.** Quality gate green (typecheck/lint/format/build/e2e).
+  (H2) ✓ · Cart + wallet checkout (H3) ✓ · My-pools list ✓ · order tracker COMPLETE
+  (H4 waiting · H5 cargo · H6 last-mile · H7 delivered) ✓ · **Suggest & vote (H8) ✓**
+  (screen-local create/vote/sort, graduated state, empty state). **Pending:** Notifications,
+  `/wallet` (extrapolated — needs director input).
+- **53 Playwright tests green.** Quality gate green (typecheck/lint/format/build/e2e).
 - **Test isolation:** a gated `POST /api/test/reset` re-seeds the shared in-memory backend;
   mutating specs `reset → login` in setup. Use it in every new mutating spec.
-- **Seed note:** Ada now has a `last_mile` ticket (`t_4790`, Ofada Rice, charged) added in
-  Phase 8 so H6 is exercisable. Canonical bucket counts are **2 / 2 / 4** (8 tickets):
-  awaiting `t_4821`,`t_4844` · in-transit `t_4801` (cargo) + `t_4790` (last-mile) ·
-  delivered `t_4780`,`t_4762`,`t_4740`,`t_4715`.
-- Next work: **Suggest & vote (H8)** — `/suggest`, backed by `/suggestions?hubId&sort`
-  (list/create/vote already in the contract + client seam).
+- **Seed notes:** P8 added a `last_mile` ticket (`t_4790`, Ofada Rice, charged) → bucket
+  counts **2 / 2 / 4** (8 tickets). P9 set Plantain suggestion (`s_flour`) to **39 votes**
+  (threshold − 1) so a single vote graduates it. Threshold = 40 (`VOTE_THRESHOLD`).
+- **Suggestion `note` is write-only** — `POST /suggestions` accepts a `note` but the entity/
+  store don't persist it, so the "why" never renders. Flagged for the backend (add `note` to
+  `SuggestionSchema` + store it to surface it on cards).
+- **Graduation is non-sticky in the backend** (`status` recomputes per vote) but the UI hides
+  the vote control once graduated, so it can't be un-voted from the screen. Graduation does
+  not create a Pool id → graduated cards link to `/discover`.
+- Next work: **Notifications** (`/notifications`, grid exists in the DS) and the extrapolated
+  **`/wallet`** (no full storyboard — keep minimal, director input needed).
 
 ## What each phase delivered
 
@@ -70,6 +75,12 @@ Snapshot for a fresh session. Pair with `CLAUDE.md` (conventions) and
   wallet stats, real "Find your next pool"/"Suggest an item" links + open-pool suggestions.
   Additive seed: `t_4790` last_mile ticket (counts → 2/2/4). Deferred actions are disabled,
   flagged stubs (no backing endpoint); real Links only to /discover, /suggest, /pool/:id.
+- **Phase 9 — Suggest & vote (H8).** Real `/suggest`, **screen-local** (no store/shell —
+  suggestions don't touch wallet/cart/hub). Intro with data-bound threshold; create form
+  (name/hub/category/why → `POST /suggestions` → prepend + reset + transient); sort chips
+  (trending/closest/newest); hub-filtered list of suggestion cards with vote toggle
+  (`POST /suggestions/:id/vote`, ±1, accent when voted), progress-to-threshold, graduated
+  "Now a pool" state (vote control replaced; → `/discover`), empty state. Seed: Plantain → 39. Reused existing classes only (no new primitive). Last-mile delivery card → gold-soft.
 
 ## Route → stage → API map
 
@@ -124,17 +135,13 @@ See the table in `CLAUDE.md` (Route map & nav model). Key calls:
 
 ## Recommended next phase
 
-**Suggest & vote (H8)** — `/suggest` is still a placeholder; it's the last interactive
-screen before the extrapolated Wallet/Notifications. Backed by `/suggestions?hubId&sort`
-with `create` + `vote` already in the contract and the client seam (`api.suggestions.*`).
+**Notifications (`/notifications`)** — the last screen with a real storyboard. The `.notif`
+grid class is already in `globals.css` and the notification icon set + seed (`n_1…n_8`) exist;
+backed by `GET /notifications` + `POST /notifications/:id/read` (already in the client seam).
+Likely screen-local (like Suggest) unless an unread badge should reach the shell — decide at
+recon. There IS a desktop bell entry point already (P3); mobile reaches it via the top bar.
 
-Pieces: a suggestion list (per active hub, sortable `trending|closest|newest`) of
-`SuggestionCard`s with a vote control (toggle → `POST /suggestions/:id/vote`, optimistic via
-a `store.voteSuggestion` action mirroring `setTicketRating`); a vote `threshold` progress
-(`votes/threshold`, `graduated` state at the line); a "Suggest an item" form
-(`POST /suggestions`, fields name/hubId/category/note). The tracker's H7 "Suggest an item"
-link already points here.
-
-Then the extrapolated screens — **Wallet** (`/wallet`, no full storyboard — keep minimal,
-needs director input) and **Notifications** (`/notifications`, grid exists in the DS). Follow
-the recon-first relay loop; any new mutating spec must `reset → login`.
+Then the extrapolated **`/wallet`** — no full storyboard mockup (only the H0 wallet card + the
+stats sidebar). Keep minimal and flag for director input; do not invent a full screen. After
+those two, the storyboard is fully built and the `app/api/**` reference routes can be handed to
+the real backend. Follow the recon-first relay loop; any new mutating spec must `reset → login`.
