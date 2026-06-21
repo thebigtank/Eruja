@@ -1,4 +1,11 @@
-import type { OrderStatus } from './types';
+import type { OrderStatus, PoolBucket } from './types';
+
+/** Coarse Home-tab bucket for a ticket status (mirrors the server-side mapping). */
+export function ticketBucket(status: OrderStatus): PoolBucket {
+  if (status === 'awaiting' || status === 'filling') return 'awaiting';
+  if (status === 'delivered') return 'delivered';
+  return 'in_transit';
+}
 
 /**
  * The 8 OrderStatus values collapse into 4 visual tracking states. This is the

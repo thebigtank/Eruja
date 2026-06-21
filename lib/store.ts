@@ -20,6 +20,7 @@ interface ErujaState {
   loadSession: () => Promise<void>;
   loadHubs: () => Promise<void>;
   loadWallet: () => Promise<void>;
+  topUp: (amount: number) => Promise<WalletState>;
   loadCart: () => Promise<void>;
   setActiveHub: (hubId: string) => void;
 
@@ -59,6 +60,12 @@ export const useEruja = create<ErujaState>((set, get) => ({
     } catch {
       set({ wallet: null });
     }
+  },
+
+  topUp: async (amount) => {
+    const wallet = await api.wallet.topUp({ amount });
+    set({ wallet }); // propagates to the shell wallet pill
+    return wallet;
   },
 
   loadCart: async () => {
