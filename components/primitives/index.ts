@@ -22,3 +22,4 @@ export {
 export { SceneSourcing, SceneCargo, SceneDoorstep, SceneMap } from './Scenes';
 export { Progress, type ProgressProps, type ProgressTone } from './Progress';
 export { PoolCard, type PoolCardProps } from './PoolCard';
+export { Timeline, type TimelineProps } from './Timeline';

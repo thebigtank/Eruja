@@ -1,6 +1,14 @@
 import { create } from 'zustand';
 import { api } from './api/client';
-import type { Cart, CheckoutResponse, Hub, RegisterBody, User, WalletState } from './types';
+import type {
+  Cart,
+  CheckoutResponse,
+  Hub,
+  OrderTicket,
+  RegisterBody,
+  User,
+  WalletState,
+} from './types';
 
 /**
  * Session / hub / wallet / cart UI state, hydrated from the client seam (lib/api/client).
@@ -26,6 +34,8 @@ interface ErujaState {
   updateCartLine: (id: string, quantity: number) => Promise<Cart>;
   removeCartLine: (id: string) => Promise<Cart>;
   checkout: () => Promise<CheckoutResponse>;
+  /** Waiting-room add/release seats. Rebalances the wallet HOLD; resyncs the store wallet. */
+  setTicketSeats: (id: string, quantity: number) => Promise<OrderTicket>;
   setActiveHub: (hubId: string) => void;
 
   login: (email: string, password: string) => Promise<User>;
@@ -111,6 +121,14 @@ export const useEruja = create<ErujaState>((set, get) => ({
       },
     });
     return result;
+  },
+
+  setTicketSeats: async (id, quantity) => {
+    const ticket = await api.tickets.setSeats(id, { quantity });
+    // The seats response carries the ticket only; the hold lives on the wallet,
+    // so resync it to keep the shell (held) in sync.
+    await get().loadWallet();
+    return ticket;
   },
 
   setActiveHub: (hubId) => set({ activeHubId: hubId }),
