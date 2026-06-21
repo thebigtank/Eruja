@@ -88,7 +88,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
 
-        {/* desktop right: wallet pill + hub chip + cart */}
+        {/* desktop right: wallet pill + hub chip + bell + cart */}
         <div className={`${styles.right} ${styles.webOnly}`}>
           <Link
             href="/wallet"
@@ -107,6 +107,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             />
             {hubName}
           </span>
+          <Link
+            href="/notifications"
+            aria-label="Notifications"
+            className={styles.iconLink}
+            aria-current={current('/notifications')}
+          >
+            <Icon name="bell" size={22} stroke={1.9} />
+          </Link>
           {CartLink}
         </div>
 
