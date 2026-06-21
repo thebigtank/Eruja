@@ -79,7 +79,7 @@ test.describe('dynamic routes resolve their record', () => {
   test('/pool/[id] renders the pool name', async ({ page }) => {
     await login(page);
     await page.goto('/pool/p_honeybeans');
-    await expect(page.getByRole('heading', { name: /Honey Beans · 50kg/i })).toBeVisible();
+    await expect(page.getByTestId('pool-web').getByText('Honey Beans · 50kg')).toBeVisible();
   });
 
   test('/me/pools/[ticket] renders the resolved visual-state bucket', async ({ page }) => {

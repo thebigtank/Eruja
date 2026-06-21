@@ -66,7 +66,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       aria-current={current('/cart')}
     >
       <Icon name="cart" size={22} stroke={1.9} />
-      {cartCount > 0 ? <span className={styles.cartBadge}>{cartCount}</span> : null}
+      {cartCount > 0 ? (
+        <span className={styles.cartBadge} data-testid="cart-badge">
+          {cartCount}
+        </span>
+      ) : null}
     </Link>
   );
 

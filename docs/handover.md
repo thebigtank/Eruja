@@ -8,10 +8,14 @@ Snapshot for a fresh session. Pair with `CLAUDE.md` (conventions) and
 - Scaffold, design-system port, reference API + contract: **done**.
 - Auth screens (Register + Login): **done**, wired to `/api/auth/*`.
 - IA locked; responsive `(app)` shell + auth guard: **done**.
-- Navigable route skeleton for every `(app)` route: **done** (placeholders that read
-  their primary data — no screen content yet).
-- **16 Playwright tests green.** Quality gate green (typecheck/lint/format/build/e2e).
-- Not started: the nine **screen contents** (H0–H8 internals). That is the next work.
+- Navigable route skeleton for every `(app)` route: **done**.
+- **Screens built so far:** Home (H0) ✓ · Discover (H1) ✓ · Pool detail + seat selector
+  (H2) ✓ — with CART now wired as cross-cutting state (Add to cart / Buy now →
+  `store.addToCart` → shell cart badge). **Pending:** Cart (H3), ticket tracker
+  (H4–H7), Suggest (H8), Wallet, Notifications.
+- **30 Playwright tests green.** Quality gate green (typecheck/lint/format/build/e2e).
+- Next work: the Cart screen (H3) — the checkout surface the Buy-now flow already
+  routes to (skeleton today).
 
 ## What each phase delivered
 
