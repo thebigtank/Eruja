@@ -11,6 +11,12 @@ function trackErrors(page: Page): string[] {
   return errors;
 }
 
+/** Re-seed the shared in-memory backend (restores wallet/tickets to seed). */
+async function reset(page: Page) {
+  const r = await page.request.post('/api/test/reset');
+  expect(r.ok()).toBeTruthy();
+}
+
 async function login(page: Page) {
   const res = await page.request.post('/api/auth/login', {
     data: { email: 'ada@eruja.app', password: 'whatever' },
@@ -23,6 +29,7 @@ const money = (s: string | null) => parseFloat((s ?? '').replace(/[^0-9.]/g, '')
 test.describe('Home (H0)', () => {
   test('renders greeting, wallet, tabs with counts, and cards', async ({ page }) => {
     const errors = trackErrors(page);
+    await reset(page);
     await login(page);
     await page.goto('/');
 
@@ -31,7 +38,7 @@ test.describe('Home (H0)', () => {
     await expect(web.getByText('Ẹ káàbọ̀ — welcome back')).toBeVisible();
     await expect(web.getByTestId('wallet-balance')).toContainText('$');
 
-    await expect(web.getByRole('button', { name: /Awaiting · \d+/ })).toBeVisible();
+    await expect(web.getByRole('button', { name: /Awaiting · 2/ })).toBeVisible();
     await expect(web.getByRole('button', { name: /In transit · 1/ })).toBeVisible();
     await expect(web.getByRole('button', { name: /Delivered · 4/ })).toBeVisible();
 
@@ -43,6 +50,7 @@ test.describe('Home (H0)', () => {
   });
 
   test('top-up: $100 chip + Top up raises the wallet card AND the shell pill', async ({ page }) => {
+    await reset(page);
     await login(page);
     await page.goto('/');
     const web = page.getByTestId('home-web');
@@ -57,6 +65,7 @@ test.describe('Home (H0)', () => {
   });
 
   test('tab switch to In transit shows the in-transit ticket only', async ({ page }) => {
+    await reset(page);
     await login(page);
     await page.goto('/');
     const web = page.getByTestId('home-web');
@@ -69,6 +78,7 @@ test.describe('Home (H0)', () => {
   test('card link targets: my-pools -> /me/pools/{id}, discover -> /pool/{id}', async ({
     page,
   }) => {
+    await reset(page);
     await login(page);
     await page.goto('/');
     const web = page.getByTestId('home-web');
@@ -81,6 +91,7 @@ test.describe('Home (H0)', () => {
 
 test.describe('desktop bell', () => {
   test('nav bell navigates to /notifications and shows active state', async ({ page }) => {
+    await reset(page);
     await login(page);
     await page.goto('/');
 

@@ -10,6 +10,12 @@ function trackErrors(page: Page): string[] {
   return errors;
 }
 
+/** Re-seed the shared in-memory backend, then authenticate (reset wipes sessions). */
+async function reset(page: Page) {
+  const r = await page.request.post('/api/test/reset');
+  expect(r.ok()).toBeTruthy();
+}
+
 async function login(page: Page) {
   const res = await page.request.post('/api/auth/login', {
     data: { email: 'ada@eruja.app', password: 'whatever' },
@@ -17,17 +23,7 @@ async function login(page: Page) {
   expect(res.ok()).toBeTruthy();
 }
 
-/** Reset server cart to the seeded 2-line state: honeybeans×10 + iru×4. */
-async function seedCart(page: Page) {
-  const existing = (await (await page.request.get('/api/cart')).json()) as {
-    lines: { id: string }[];
-  };
-  for (const l of existing.lines) await page.request.delete(`/api/cart/lines/${l.id}`);
-  await page.request.post('/api/cart/lines', { data: { poolId: 'p_honeybeans', quantity: 10 } });
-  await page.request.post('/api/cart/lines', { data: { poolId: 'p_iru', quantity: 4 } });
-}
-
-/** Clear all cart lines without re-seeding. */
+/** Clear all cart lines (for the empty-state test). */
 async function clearCart(page: Page) {
   const existing = (await (await page.request.get('/api/cart')).json()) as {
     lines: { id: string }[];
@@ -44,8 +40,8 @@ const money = (s: string | null) => parseFloat((s ?? '').replace(/[^0-9.]/g, '')
 
 test.describe('Cart (H3) — with items', () => {
   test.beforeEach(async ({ page }) => {
+    await reset(page); // seeded cart = honeybeans×10 + iru×4
     await login(page);
-    await seedCart(page);
   });
 
   test('renders both seeded lines, summary, Pay enabled — zero console errors', async ({
@@ -198,6 +194,7 @@ test.describe('Cart (H3) — with items', () => {
 
 test.describe('Cart (H3) — empty', () => {
   test.beforeEach(async ({ page }) => {
+    await reset(page);
     await login(page);
     await clearCart(page);
   });

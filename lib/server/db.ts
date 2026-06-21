@@ -399,6 +399,15 @@ export function getStore(): Store {
   return g[GLOBAL_KEY];
 }
 
+/**
+ * Re-seed the store to its initial state. TEST-ONLY: exposed via the gated
+ * POST /api/test/reset route so e2e specs can isolate the shared in-memory
+ * backend between tests. Wipes sessions too — callers must re-authenticate.
+ */
+export function resetStore(): void {
+  (globalThis as GlobalWithStore)[GLOBAL_KEY] = seed();
+}
+
 /** Generate a deterministic, monotonic id (no Math.random — keeps tests stable). */
 export function nextId(prefix: string): string {
   const store = getStore();

@@ -21,18 +21,16 @@ async function login(page: Page) {
 const cartLen = (page: Page) =>
   page.evaluate(() => window.__eruja?.getState().cart?.lines.length ?? 0);
 
-async function seedCart(page: Page) {
-  const existing = (await (await page.request.get('/api/cart')).json()) as {
-    lines: { id: string }[];
-  };
-  for (const l of existing.lines) await page.request.delete(`/api/cart/lines/${l.id}`);
-  await page.request.post('/api/cart/lines', { data: { poolId: 'p_honeybeans', quantity: 10 } });
-  await page.request.post('/api/cart/lines', { data: { poolId: 'p_iru', quantity: 4 } });
+/** Re-seed the shared in-memory backend (restores Ada's seeded cart + tickets). */
+async function reset(page: Page) {
+  const r = await page.request.post('/api/test/reset');
+  expect(r.ok()).toBeTruthy();
 }
 
 test.describe('Pool detail (H2)', () => {
   test('renders an open pool with header, selector, savings, and actions', async ({ page }) => {
     const errors = trackErrors(page);
+    await reset(page);
     await login(page);
     await page.goto('/pool/p_honeybeans');
     const web = page.getByTestId('pool-web');
@@ -53,6 +51,7 @@ test.describe('Pool detail (H2)', () => {
   });
 
   test('selector live math + stepper min/max', async ({ page }) => {
+    await reset(page);
     await login(page);
     await page.goto('/pool/p_honeybeans');
     const web = page.getByTestId('pool-web');
@@ -81,8 +80,8 @@ test.describe('Pool detail (H2)', () => {
   });
 
   test('Add to cart updates the shell badge + shows Added', async ({ page }) => {
+    await reset(page);
     await login(page);
-    await seedCart(page); // ensure cart has lines so badge is visible
     await page.goto('/pool/p_palm'); // open, NOT in the seeded cart
     const web = page.getByTestId('pool-web');
 
@@ -98,8 +97,8 @@ test.describe('Pool detail (H2)', () => {
   });
 
   test('Buy now adds the line and navigates to /cart', async ({ page }) => {
+    await reset(page);
     await login(page);
-    await seedCart(page); // ensure cart has lines so badge is visible
     await page.goto('/pool/p_egusi'); // open, not in the seeded cart
     const badge = page.getByTestId('cart-badge').first();
     await expect(badge).toBeVisible(); // seeded cart hydrated
@@ -110,6 +109,7 @@ test.describe('Pool detail (H2)', () => {
   });
 
   test('closed pool shows the filled notice, no selector', async ({ page }) => {
+    await reset(page);
     await login(page);
     await page.goto('/pool/p_crayfish'); // 48/48, in_transit
     const web = page.getByTestId('pool-web');
