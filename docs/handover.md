@@ -10,12 +10,13 @@ Snapshot for a fresh session. Pair with `CLAUDE.md` (conventions) and
 - IA locked; responsive `(app)` shell + auth guard: **done**.
 - Navigable route skeleton for every `(app)` route: **done**.
 - **Screens built so far:** Home (H0) ✓ · Discover (H1) ✓ · Pool detail + seat selector
-  (H2) ✓ — with CART now wired as cross-cutting state (Add to cart / Buy now →
-  `store.addToCart` → shell cart badge). **Pending:** Cart (H3), ticket tracker
-  (H4–H7), Suggest (H8), Wallet, Notifications.
-- **30 Playwright tests green.** Quality gate green (typecheck/lint/format/build/e2e).
-- Next work: the Cart screen (H3) — the checkout surface the Buy-now flow already
-  routes to (skeleton today).
+  (H2) ✓ · **Cart + wallet checkout (H3) ✓** — lines, qty-edit, remove, short-funds
+  top-up chips, checkout → success card, empty state; store has `updateCartLine`,
+  `removeCartLine`, `checkout` actions. **Pending:** ticket tracker (H4–H7), Suggest
+  (H8), Wallet, Notifications.
+- **36 Playwright tests green.** Quality gate green (typecheck/lint/format/build/e2e).
+- Next work: the ticket-tracker family (H4–H7) — status-driven view for `/me/pools/[ticket]`
+  (visual states: waiting / cargo / last-mile / delivered).
 
 ## What each phase delivered
 
@@ -26,10 +27,25 @@ Snapshot for a fresh session. Pair with `CLAUDE.md` (conventions) and
 - **Phase 1 — auth screens.** `eye`/`eyeOff` icons; `AuthFrame` + `PasswordField`;
   Register + Login wired (session + hub → store), auth guards, validation, show-hide;
   e2e for render/flow/validation/show-hide.
-- **Phase 2 — IA, shell, route skeleton (this phase).** Locked the route map; fleshed the
-  responsive shell (tab bar / top nav / wallet pill / hub chip / cart badge / active
-  state / auth guard); skeleton pages for all routes; `lib/ticket-state.ts` state machine;
-  env-gated the `__eruja` test seam; these three handover docs.
+- **Phase 2 — IA, shell, route skeleton.** Locked the route map; fleshed the responsive
+  shell (tab bar / top nav / wallet pill / hub chip / cart badge / active state / auth
+  guard); skeleton pages for all routes; `lib/ticket-state.ts` state machine; env-gated
+  the `__eruja` test seam; these three handover docs.
+- **Phase 3 — Home (H0).** Wallet card + top-up chips; my-pools tabs backed by
+  `/me/tickets?status`; discover teaser `PoolCard` grid; wired to store.
+- **Phase 4 — Discover (H1).** Hub-switch `PoolCard` grid + category filter; featured-pool
+  hero; empty state; Discover nav highlight; wired to store.
+- **Phase 5 — Pool detail (H2).** Full pool header + signature seat selector (PoolPeople /
+  stepper / live math); savings card; Add to cart / Buy now → `store.addToCart`; closed
+  state; `Stepper` component.
+- **Phase 6 — Cart + wallet checkout (H3).** `CartLineItem` (mobile 2-row / web single-row
+  responsive, `data-testid="cart-line-web"` for scoping); `Cart.module.css` two-column web
+  layout; cart page states (loading / normal / short-funds / success / empty); `short-funds-card`
+  (always visible web right column; `data-testid="short-funds-card"` for test scoping);
+  `mobileTopUp` section (hidden on web via `.mobileTopUp { display:none }`); `liveBalance`
+  derived from `wallet?.balance ?? cart?.walletBalance` so topUp reflects without refetch;
+  `store.updateCartLine` / `removeCartLine` / `checkout`; POST `/api/checkout` → success card
+  → badge cleared; hold model (`wallet.held` += subtotal, `wallet.balance` unchanged).
 
 ## Route → stage → API map
 
@@ -73,13 +89,21 @@ See the table in `CLAUDE.md` (Route map & nav model). Key calls:
 
 ## Recommended next phase
 
-**Build the first real screen.** Strong candidates, in order:
+**Ticket tracker (H4–H7)** — `/me/pools/[ticket]` is the status-driven tracker for an
+individual order. Four visual states driven by `lib/ticket-state.ts`:
 
-1. **`/` Home (H0)** — highest-traffic landing; exercises wallet card, my-pools tabs
-   (tickets), discover teaser (PoolCard), and most UI primitives. Good template for the
-   rest.
-2. **`/discover` (H1)** then **`/pool/[id]` (H2)** — the core browse → join funnel; H2 is
-   the signature "pool of people" seat selector (interactive, already has live data).
+| Visual state | `OrderStatus` values                               | Storyboard screen                  |
+| ------------ | -------------------------------------------------- | ---------------------------------- |
+| `waiting`    | `awaiting`, `filling`                              | H4 — "queue ticket", seats filling |
+| `cargo`      | `full_charged`, `sourced`, `in_transit`, `customs` | H5 — cargo pipeline                |
+| `last-mile`  | `last_mile`                                        | H6 — "out for delivery"            |
+| `delivered`  | `delivered`                                        | H7 — receipt + rate                |
+
+The `/me/pools` list (`/me/pools` route) that precedes it is a simple TicketCard list
+backed by `GET /me/tickets`.
+
+Build order: list first (H → /me/pools), then the tracker detail (H4 → /me/pools/[ticket]).
+Port `.timeline` / `.hsteps` classes from `globals.css` verbatim (already in the DS).
 
 Each screen phase should: port the relevant UI primitives from `reference/` (asset_4)
 verbatim as needed, build the screen from `globals.css` classes, wire to the client seam,
