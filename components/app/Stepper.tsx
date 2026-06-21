@@ -6,13 +6,22 @@ interface StepperProps {
   value: number;
   min?: number;
   max?: number;
+  /** Disable both buttons while an async commit is in flight (prevents double-submit). */
+  busy?: boolean;
   onDecrement: () => void;
   onIncrement: () => void;
 }
 
-export function Stepper({ value, min = 1, max, onDecrement, onIncrement }: StepperProps) {
-  const atMin = value <= min;
-  const atMax = max !== undefined && value >= max;
+export function Stepper({
+  value,
+  min = 1,
+  max,
+  busy = false,
+  onDecrement,
+  onIncrement,
+}: StepperProps) {
+  const atMin = busy || value <= min;
+  const atMax = busy || (max !== undefined && value >= max);
   return (
     <div className="stepper">
       <button

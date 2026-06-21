@@ -78,3 +78,97 @@ test.describe('My pools list (/me/pools)', () => {
     await expect(page).toHaveURL(/\/me\/pools\/t_4821$/);
   });
 });
+
+const heldNow = (page: Page) => page.evaluate(() => window.__eruja?.getState().wallet?.held ?? 0);
+
+test.describe('Order tracker — waiting (H4)', () => {
+  test.beforeEach(async ({ page }) => {
+    await reset(page);
+    await login(page);
+  });
+
+  test('t_4821 waiting room: badge, status line, people legend, seats, hold, timeline, disabled leave', async ({
+    page,
+  }) => {
+    const errors = trackErrors(page);
+    await page.goto('/me/pools/t_4821');
+    await page.waitForSelector('[data-testid="tracker-web"]', { timeout: 10_000 });
+    const web = page.getByTestId('tracker-web');
+
+    // Back row + waiting badge
+    await expect(web.getByTestId('tracker-name')).toContainText('Honey Beans');
+    await expect(web.getByTestId('tracker-badge')).toHaveText('Waiting room');
+
+    // Status line: 64 - 48 = 16 cups to ship
+    await expect(web.getByText('16 cups to ship before it moves')).toBeVisible();
+
+    // People legend: 10 yours, others = 48 - 10 = 38 joined, open = 16
+    await expect(web.getByTestId('legend-yours')).toContainText('10 yours');
+    await expect(web).toContainText('38 joined');
+
+    // Seats + hold: 10 cups, 10×6.5 = $65
+    await expect(web.getByTestId('seats-value')).toContainText('10');
+    await expect(web.getByTestId('tracker-hold')).toHaveText('$65');
+
+    // Transparency feed renders the seeded timeline
+    await expect(web.getByTestId('tracker-timeline')).toContainText('Bag is filling');
+
+    // Leave is disabled
+    await expect(web.getByTestId('leave-btn')).toBeDisabled();
+
+    expect(errors, errors.join('\n')).toEqual([]);
+  });
+
+  test('add a seat: seats++ , hold rebalances ($65 → $71.50), wallet.held +6.5', async ({
+    page,
+  }) => {
+    await page.goto('/me/pools/t_4821');
+    await page.waitForSelector('[data-testid="tracker-web"]', { timeout: 10_000 });
+    const web = page.getByTestId('tracker-web');
+
+    // Wallet hold before: t_4821 ($65) + t_4844 ($26) = $91
+    expect(await heldNow(page)).toBe(91);
+
+    await web.locator('button[aria-label="Increase"]').click();
+
+    await expect(web.getByTestId('seats-value')).toContainText('11');
+    await expect(web.getByTestId('tracker-hold')).toHaveText('$71.50');
+    // Hold rebalanced on the wallet: 91 - 65 + 71.50 = 97.50
+    await expect.poll(() => heldNow(page)).toBe(97.5);
+  });
+
+  test('release a seat to the floor: Decrease disables at the last seat (1)', async ({ page }) => {
+    await page.goto('/me/pools/t_4821');
+    await page.waitForSelector('[data-testid="tracker-web"]', { timeout: 10_000 });
+    const web = page.getByTestId('tracker-web');
+    const dec = web.locator('button[aria-label="Decrease"]');
+
+    // 10 -> 1 is exactly 9 decrements; each click auto-waits for the button to
+    // re-enable after the async commit (Stepper is busy-disabled mid-flight).
+    for (let i = 0; i < 9; i++) await dec.click();
+    await expect(web.getByTestId('seats-value')).toContainText('1');
+    await expect(dec).toBeDisabled();
+    await expect(web.getByTestId('tracker-hold')).toHaveText('$6.50');
+  });
+
+  test('leave pool is gated: DELETE /me/tickets/:id returns 501 feature_disabled', async ({
+    page,
+  }) => {
+    const res = await page.request.delete('/api/me/tickets/t_4821');
+    expect(res.status()).toBe(501);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe('feature_disabled');
+  });
+
+  test('cargo/delivered tickets render the navigable placeholder, not the waiting room', async ({
+    page,
+  }) => {
+    // t_4780 (honey beans) is delivered
+    await page.goto('/me/pools/t_4780');
+    await expect(page.getByTestId('tracker-badge')).toHaveText('Delivered');
+    await expect(page.getByTestId('tracker-placeholder')).toContainText(
+      'Delivered view — building next phase',
+    );
+    await expect(page.getByTestId('tracker-web')).toHaveCount(0);
+  });
+});
