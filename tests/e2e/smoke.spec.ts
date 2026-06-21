@@ -19,11 +19,12 @@ function trackErrors(page: Page): string[] {
 }
 
 test.describe('public pages render without errors', () => {
-  test('home /', async ({ page }) => {
+  test('home / (guarded) redirects to /login without a session', async ({ page }) => {
     const errors = trackErrors(page);
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /pooled together/i })).toBeVisible();
-    await expect(page.getByText('eruja').first()).toBeVisible();
+    // The (app) group is auth-guarded; an anonymous visit lands on /login.
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
     expect(errors, errors.join('\n')).toEqual([]);
   });
 
