@@ -37,11 +37,11 @@ test.describe('My pools list (/me/pools)', () => {
 
     const web = page.getByTestId('me-pools-web');
     await expect(web.getByRole('heading', { name: 'My pools' })).toBeVisible();
-    await expect(web.getByText('7 pools in motion')).toBeVisible();
+    await expect(web.getByText('8 pools in motion')).toBeVisible();
 
-    // Tab counts reflect Ada's seeded 2 / 1 / 4 buckets
+    // Tab counts reflect Ada's seeded 2 / 2 / 4 buckets (in_transit = crayfish cargo + rice last-mile)
     await expect(web.getByTestId('tab-awaiting')).toContainText('Awaiting · 2');
-    await expect(web.getByTestId('tab-in_transit')).toContainText('In transit · 1');
+    await expect(web.getByTestId('tab-in_transit')).toContainText('In transit · 2');
     await expect(web.getByTestId('tab-delivered')).toContainText('Delivered · 4');
 
     // Default Awaiting bucket → 2 ticket cards, each linking to its tracker
@@ -67,8 +67,9 @@ test.describe('My pools list (/me/pools)', () => {
     await expect(web.locator('a[href^="/me/pools/"]')).toHaveCount(4);
 
     await web.getByTestId('tab-in_transit').click();
-    await expect(web.locator('a[href^="/me/pools/"]')).toHaveCount(1);
+    await expect(web.locator('a[href^="/me/pools/"]')).toHaveCount(2);
     await expect(web.locator('a[href="/me/pools/t_4801"]')).toBeVisible();
+    await expect(web.locator('a[href="/me/pools/t_4790"]')).toBeVisible();
   });
 
   test('a list card navigates into the tracker', async ({ page }) => {

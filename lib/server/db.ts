@@ -312,6 +312,53 @@ function seed(): Store {
         eta: 'London May 4',
       },
     },
+    // Phase-8 additive seed: a last_mile (H6) ticket so the out-for-delivery state
+    // can be exercised. Charged; delivery-window/portion mirror the storyboard's
+    // canonical values (DPD · Mo · AB12 CDE · 2–6pm · vacuum-sealed · 7.8kg).
+    {
+      id: 't_4790',
+      poolId: 'p_rice',
+      name: 'Ofada Rice · 50kg',
+      productKind: 'rice',
+      status: 'last_mile',
+      mySeats: 10,
+      holdAmount: round2(10 * GROUP_UNIT),
+      chargedAmount: round2(10 * GROUP_UNIT),
+      fill: { filled: 64, total: 64 },
+      hsteps: { steps: ['gather', 'source', 'freight', 'doorstep'], active: 3 },
+      timeline: [
+        { state: 'done', title: 'Bag filled', desc: 'all 64 seats committed', when: 'apr 26' },
+        {
+          state: 'done',
+          title: 'Sourced & inspected',
+          desc: 'Quality check passed',
+          when: 'apr 28',
+        },
+        {
+          state: 'done',
+          title: 'Cleared customs',
+          desc: 'arrived at the London hub',
+          when: 'may 09',
+        },
+        { state: 'active', title: 'Out for delivery', desc: 'DPD · driver Mo', when: 'today' },
+      ],
+      cargoRoute: {
+        from: 'Lagos',
+        to: 'London',
+        state: 'last_mile',
+        flight: 'LX4421',
+        eta: 'arrived London',
+      },
+      deliveryWindow: {
+        date: 'Today',
+        slot: '2–6pm',
+        courier: 'DPD',
+        driver: 'Mo',
+        van: 'AB12 CDE',
+        hubOut: '11:42 today',
+      },
+      portion: { units: '10 cups', kg: round2(10 * 0.78), packaging: 'vacuum-sealed' },
+    },
     delivered('t_4780', 'p_honeybeans', 'honeybeans', 'Honey Beans · 50kg', 10, 64, 45, 5),
     delivered('t_4762', 'p_rice', 'rice', 'Ofada Rice · 50kg', 8, 64, 38, 4),
     delivered('t_4740', 'p_egusi', 'egusi', 'Egusi · 10kg', 6, 32, 22, 4),

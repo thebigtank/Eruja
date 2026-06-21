@@ -39,7 +39,7 @@ test.describe('Home (H0)', () => {
     await expect(web.getByTestId('wallet-balance')).toContainText('$');
 
     await expect(web.getByRole('button', { name: /Awaiting · 2/ })).toBeVisible();
-    await expect(web.getByRole('button', { name: /In transit · 1/ })).toBeVisible();
+    await expect(web.getByRole('button', { name: /In transit · 2/ })).toBeVisible();
     await expect(web.getByRole('button', { name: /Delivered · 4/ })).toBeVisible();
 
     // at least one my-pools card and the discover teaser cards
@@ -64,15 +64,16 @@ test.describe('Home (H0)', () => {
     await expect(page.getByTestId('shell-wallet-pill')).toContainText(expected);
   });
 
-  test('tab switch to In transit shows the in-transit ticket only', async ({ page }) => {
+  test('tab switch to In transit shows the in-transit tickets only', async ({ page }) => {
     await reset(page);
     await login(page);
     await page.goto('/');
     const web = page.getByTestId('home-web');
 
-    await web.getByRole('button', { name: /In transit · 1/ }).click();
+    await web.getByRole('button', { name: /In transit · 2/ }).click();
     await expect(web.locator('a[href="/me/pools/t_4801"]')).toBeVisible();
-    await expect(web.locator('a[href^="/me/pools/"]')).toHaveCount(1);
+    await expect(web.locator('a[href="/me/pools/t_4790"]')).toBeVisible();
+    await expect(web.locator('a[href^="/me/pools/"]')).toHaveCount(2);
   });
 
   test('card link targets: my-pools -> /me/pools/{id}, discover -> /pool/{id}', async ({
