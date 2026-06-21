@@ -367,7 +367,7 @@ export default function TrackingPage() {
     );
 
     const windowCard = (
-      <div className="card accent-soft col" style={{ gap: 10 }} data-testid="delivery-window">
+      <div className="card gold-soft col" style={{ gap: 10 }} data-testid="delivery-window">
         <div className="illo-tile" style={{ height: 120 }}>
           <SceneDoorstep />
         </div>
