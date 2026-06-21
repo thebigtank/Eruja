@@ -1,0 +1,55 @@
+/* Cart page layout — mobile single column / web two-column at 900px */
+
+.page {
+  display: block;
+}
+
+/* ---- MOBILE ---- */
+.mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.web {
+  display: none;
+}
+
+.webLeft {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.webRight {
+  width: 320px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Mobile-only top-up chips — hidden on web (web has a persistent card) */
+.mobileTopUp {
+  display: block;
+}
+
+/* ---- WEB (≥ 900px) ---- */
+@media (min-width: 900px) {
+  .mobile {
+    display: none;
+  }
+
+  .web {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 32px;
+  }
+
+  .mobileTopUp {
+    display: none;
+  }
+}

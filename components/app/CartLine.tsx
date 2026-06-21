@@ -27,8 +27,12 @@ export function CartLineItem({ line, onQuantityChange, onRemove, busy }: CartLin
   const info = (
     <div className={styles.info}>
       <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>{line.name}</p>
-      <p className="txt-sm muted" style={{ margin: 0 }}>{line.sub}</p>
-      <p className="txt-sm muted" style={{ margin: 0 }}>{unitLine}</p>
+      <p className="txt-sm muted" style={{ margin: 0 }}>
+        {line.sub}
+      </p>
+      <p className="txt-sm muted" style={{ margin: 0 }}>
+        {unitLine}
+      </p>
     </div>
   );
 
@@ -64,19 +68,23 @@ export function CartLineItem({ line, onQuantityChange, onRemove, busy }: CartLin
         <div className={styles.mBottom}>
           {stepper}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-            <span className="price-mono" style={{ fontSize: 18 }}>{lineTotal}</span>
+            <span className="price-mono" style={{ fontSize: 18 }}>
+              {lineTotal}
+            </span>
             {removeBtn}
           </div>
         </div>
       </div>
 
       {/* Web layout: single row */}
-      <div className={styles.web}>
+      <div className={styles.web} data-testid="cart-line-web">
         {thumb}
         {info}
         {stepper}
         <div className={styles.webRight}>
-          <span className="price-mono" style={{ fontSize: 18 }}>{lineTotal}</span>
+          <span className="price-mono" style={{ fontSize: 18 }}>
+            {lineTotal}
+          </span>
           {removeBtn}
         </div>
       </div>
