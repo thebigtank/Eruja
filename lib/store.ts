@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { api } from './api/client';
-import type { Cart, Hub, RegisterBody, User, WalletState } from './types';
+import type { Cart, CheckoutResponse, Hub, RegisterBody, User, WalletState } from './types';
 
 /**
  * Session / hub / wallet / cart UI state, hydrated from the client seam (lib/api/client).
@@ -23,6 +23,9 @@ interface ErujaState {
   topUp: (amount: number) => Promise<WalletState>;
   loadCart: () => Promise<void>;
   addToCart: (poolId: string, quantity: number) => Promise<Cart>;
+  updateCartLine: (id: string, quantity: number) => Promise<Cart>;
+  removeCartLine: (id: string) => Promise<Cart>;
+  checkout: () => Promise<CheckoutResponse>;
   setActiveHub: (hubId: string) => void;
 
   login: (email: string, password: string) => Promise<User>;
@@ -81,6 +84,33 @@ export const useEruja = create<ErujaState>((set, get) => ({
     const cart = await api.cart.addLine({ poolId, quantity });
     set({ cart }); // propagates to the shell cart badge
     return cart;
+  },
+
+  updateCartLine: async (id, quantity) => {
+    const cart = await api.cart.patchLine(id, { quantity });
+    set({ cart });
+    return cart;
+  },
+
+  removeCartLine: async (id) => {
+    const cart = await api.cart.removeLine(id);
+    set({ cart });
+    return cart;
+  },
+
+  checkout: async () => {
+    const result = await api.checkout();
+    // Cart cleared server-side; reflect empty state + updated wallet hold locally.
+    set({
+      wallet: result.wallet,
+      cart: {
+        lines: [],
+        subtotal: 0,
+        walletBalance: result.wallet.balance,
+        balanceAfter: result.wallet.balance,
+      },
+    });
+    return result;
   },
 
   setActiveHub: (hubId) => set({ activeHubId: hubId }),
