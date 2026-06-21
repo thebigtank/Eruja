@@ -1,0 +1,70 @@
+/* CartLine — responsive layout: mobile (2-row) and web (single-row).
+   Visual classes come from globals.css; only layout lives here. */
+
+/* ---- MOBILE ---- */
+.mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.web {
+  display: none;
+}
+
+.mTop {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.thumb {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.webRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 80px;
+}
+
+/* ---- WEB (≥ 900px) ---- */
+@media (min-width: 900px) {
+  .mobile {
+    display: none;
+  }
+
+  .web {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .web .info {
+    flex: 1;
+  }
+
+  .web .thumb {
+    flex-shrink: 0;
+  }
+}
