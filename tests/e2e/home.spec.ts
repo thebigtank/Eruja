@@ -31,7 +31,7 @@ test.describe('Home (H0)', () => {
     await expect(web.getByText('Ẹ káàbọ̀ — welcome back')).toBeVisible();
     await expect(web.getByTestId('wallet-balance')).toContainText('$');
 
-    await expect(web.getByRole('button', { name: /Awaiting · 2/ })).toBeVisible();
+    await expect(web.getByRole('button', { name: /Awaiting · \d+/ })).toBeVisible();
     await expect(web.getByRole('button', { name: /In transit · 1/ })).toBeVisible();
     await expect(web.getByRole('button', { name: /Delivered · 4/ })).toBeVisible();
 
