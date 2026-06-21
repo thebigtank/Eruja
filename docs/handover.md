@@ -10,18 +10,19 @@ Snapshot for a fresh session. Pair with `CLAUDE.md` (conventions) and
 - IA locked; responsive `(app)` shell + auth guard: **done**.
 - Navigable route skeleton for every `(app)` route: **done**.
 - **Screens built so far:** Home (H0) ✓ · Discover (H1) ✓ · Pool detail + seat selector
-  (H2) ✓ · Cart + wallet checkout (H3) ✓ · **My-pools list ✓ + order-tracker shell ✓ +
-  WAITING state (H4) ✓** — bucketed ticket list linking to the tracker; tracker resolves
-  the visual state and renders waiting for real (people grid, progress, seat add/release
-  via `store.setTicketSeats` rebalancing the wallet hold, transparency Timeline, disabled
-  501 leave); cargo/last-mile/delivered render a navigable placeholder. **Pending:** the
-  remaining tracker states cargo/last-mile/delivered (H5–H7), Suggest (H8), Wallet,
-  Notifications.
-- **44 Playwright tests green.** Quality gate green (typecheck/lint/format/build/e2e).
+  (H2) ✓ · Cart + wallet checkout (H3) ✓ · My-pools list ✓ · **order tracker COMPLETE —
+  all 4 visual states real (H4 waiting · H5 cargo · H6 last-mile · H7 delivered) ✓**. Every
+  `OrderStatus` now resolves to a real view; no placeholder remains. Rating (H7) wired via
+  `store.setTicketRating`. **Pending:** Suggest (H8), Wallet, Notifications.
+- **48 Playwright tests green.** Quality gate green (typecheck/lint/format/build/e2e).
 - **Test isolation:** a gated `POST /api/test/reset` re-seeds the shared in-memory backend;
   mutating specs `reset → login` in setup. Use it in every new mutating spec.
-- Next work: the cargo tracker state (H5) — `full_charged|sourced|in_transit|customs` →
-  the `.hsteps` pipeline + cargo route. `t_4801` (crayfish, in_transit) is the seed target.
+- **Seed note:** Ada now has a `last_mile` ticket (`t_4790`, Ofada Rice, charged) added in
+  Phase 8 so H6 is exercisable. Canonical bucket counts are **2 / 2 / 4** (8 tickets):
+  awaiting `t_4821`,`t_4844` · in-transit `t_4801` (cargo) + `t_4790` (last-mile) ·
+  delivered `t_4780`,`t_4762`,`t_4740`,`t_4715`.
+- Next work: **Suggest & vote (H8)** — `/suggest`, backed by `/suggestions?hubId&sort`
+  (list/create/vote already in the contract + client seam).
 
 ## What each phase delivered
 
@@ -59,6 +60,16 @@ Snapshot for a fresh session. Pair with `CLAUDE.md` (conventions) and
   disabled 501 leave); cargo/last-mile/delivered → `tracker-placeholder`. `Timeline`
   primitive ported. `Stepper` gained a `busy` prop (disables mid-commit). **Test isolation:**
   `resetStore()` + gated `POST /api/test/reset`; mutating specs now `reset → login`.
+- **Phase 8 — tracker states CARGO (H5) + LAST-MILE (H6) + DELIVERED (H7).** Filled the three
+  remaining state bodies in `/me/pools/[ticket]` (shell/back-row/badge/resolver unchanged).
+  H5: card.ink charge line, `HSteps` pipeline (ported primitive), cargo route card
+  (SceneCargo + from→to/flight/eta), Timeline, deferred "Track cargo". H6: arrival window,
+  accent-soft delivery-window card, portion card, Timeline, deferred Track-courier/Reschedule.
+  H7: SceneDoorstep celebration, green-soft per-ticket savings, **interactive `Stars`
+  (ported)** rating → `store.setTicketRating` (POST `/me/tickets/:id/rating`, persists),
+  wallet stats, real "Find your next pool"/"Suggest an item" links + open-pool suggestions.
+  Additive seed: `t_4790` last_mile ticket (counts → 2/2/4). Deferred actions are disabled,
+  flagged stubs (no backing endpoint); real Links only to /discover, /suggest, /pool/:id.
 
 ## Route → stage → API map
 
@@ -97,40 +108,33 @@ See the table in `CLAUDE.md` (Route map & nav model). Key calls:
   (refund logic not shipped). The tracker renders the disabled "Leave pool · coming soon"
   button + caption; the 501 is asserted at the API level.
 - **My-pools list empty-state is not browser-exercised** — Ada's seed fills all three
-  buckets (2/1/4), so there is no fixture path to an empty bucket. The empty branch +
+  buckets (2/2/4), so there is no fixture path to an empty bucket. The empty branch +
   Browse-pools CTA exist and mirror the already-tested cart/discover empty CTAs; revisit
   if a fresh-user fixture lands.
+- **Tracker deferred actions** — "Track cargo", "Track courier", "Reschedule delivery" are
+  disabled, flagged stubs (no backing endpoint in the contract). Wire them when tracking/
+  reschedule endpoints ship.
 - **No desktop entry point for `/notifications`** — the storyboard WebNav has no bell;
   recommend adding a desktop bell in a shell follow-up. Reachable on mobile + by URL now.
-- **CLAUDE.md "Git remote" line is stale** — it names `Eruja-App/Eruja-Frontend`, but
-  `origin` is `github.com/thebigtank/Eruja` (continuous history, nothing stranded; the old
-  remote holds only an older ancestor snapshot). `origin/main` is at the Phase-6 tip
-  (`8e2e37b`); local is ahead by the 5 unpushed Phase-7 commits. Update the doc + push when
-  convenient.
+- **Remote / push** — `origin` = `github.com/thebigtank/Eruja` (CLAUDE.md now corrected).
+  History is one continuous line; local is ahead of `origin/main` by the unpushed
+  Phase-7/8 commits. Push when convenient (no force-push).
 - Deferred backend endpoints noted in `docs/api-contract.md` (reschedule delivery,
   referral/share, standalone receipt).
 
 ## Recommended next phase
 
-**Remaining tracker states (H5–H7)** — the `/me/pools/[ticket]` shell already routes every
-ticket to a state body; `waiting` (H4) is real, the other three render a placeholder.
-Fill them in:
+**Suggest & vote (H8)** — `/suggest` is still a placeholder; it's the last interactive
+screen before the extrapolated Wallet/Notifications. Backed by `/suggestions?hubId&sort`
+with `create` + `vote` already in the contract and the client seam (`api.suggestions.*`).
 
-| Visual state | `OrderStatus` values                               | Storyboard screen     | Seed target         |
-| ------------ | -------------------------------------------------- | --------------------- | ------------------- |
-| `waiting` ✓  | `awaiting`, `filling`                              | H4 — seats filling    | `t_4821`, `t_4844`  |
-| `cargo`      | `full_charged`, `sourced`, `in_transit`, `customs` | H5 — cargo pipeline   | `t_4801` (crayfish) |
-| `last-mile`  | `last_mile`                                        | H6 — out for delivery | (no seed; add one)  |
-| `delivered`  | `delivered`                                        | H7 — receipt + rate   | `t_4780`/`t_4762`/… |
+Pieces: a suggestion list (per active hub, sortable `trending|closest|newest`) of
+`SuggestionCard`s with a vote control (toggle → `POST /suggestions/:id/vote`, optimistic via
+a `store.voteSuggestion` action mirroring `setTicketRating`); a vote `threshold` progress
+(`votes/threshold`, `graduated` state at the line); a "Suggest an item" form
+(`POST /suggestions`, fields name/hubId/category/note). The tracker's H7 "Suggest an item"
+link already points here.
 
-Build order: **H5 cargo** next — render the `.hsteps` pipeline (`ticket.hsteps`), the
-`cargoRoute` (from/to/flight/eta), and the Timeline. `t_4801` carries a full `cargoRoute`
-
-- `hsteps.active: 2`. Then **H7 delivered** (`deliveryWindow` + `portion` + `savings` +
-  star `rating` via `POST /me/tickets/:id/rating`, `RatingBody`), then **H6 last-mile** (no
-  seed ticket yet — add a `last_mile` ticket to `db.ts`). `.hsteps` classes already live in
-  `globals.css`; `SceneCargo`/`SceneDoorstep` primitives are ported.
-
-Each state replaces its branch in the existing `tracker-page` switch — reuse the back row +
-badge + Timeline already in place. Add browser tests per state. Follow the recon-first relay
-loop; any new mutating spec must `reset → login`.
+Then the extrapolated screens — **Wallet** (`/wallet`, no full storyboard — keep minimal,
+needs director input) and **Notifications** (`/notifications`, grid exists in the DS). Follow
+the recon-first relay loop; any new mutating spec must `reset → login`.

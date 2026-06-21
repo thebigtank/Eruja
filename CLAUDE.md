@@ -116,6 +116,6 @@ statically dead-code-eliminated from real prod builds: present only in dev or wh
 
 ## Git
 
-Remote: `github.com/Eruja-App/Eruja-Frontend` (private). Author identity
+Remote: `github.com/thebigtank/Eruja` (private; `origin`). Author identity
 `theBigTank <support@raymanthis.com>`; commits keep a `Co-Authored-By: Claude` trailer.
 Commit in small staged steps; do not force-push history.
