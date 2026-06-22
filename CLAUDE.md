@@ -2,6 +2,30 @@
 
 Working guide for any session picking up this repo. Read this first.
 
+## Build status — resume here (paused 2026-06-22, after Phase 9)
+
+**Storyboard screens H0–H8 are all built and green.** What's shipped:
+
+- Auth (Register + Login) · shell + auth guard · navigable route skeleton.
+- **H0** Home · **H1** Discover · **H2** Pool detail + seat selector · **H3** Cart + wallet
+  checkout · My-pools list · **H4–H7** order tracker COMPLETE (waiting/cargo/last-mile/
+  delivered, all 4 visual states real; rating mutation wired) · **H8** Suggest & vote.
+- **53 Playwright tests green.** Full quality gate green
+  (typecheck/lint/format:check/build/test:e2e).
+
+**Next to build (in order):**
+
+1. **Notifications (`/notifications`)** — last screen with a real storyboard. `.notif` grid
+   class + icon set + seed (`n_1…n_8`) exist; `GET /notifications` + `POST /notifications/:id/read`
+   already in the client seam. Likely screen-local (like Suggest); a desktop bell + mobile
+   top-bar entry already route here.
+2. **`/wallet`** — extrapolated, NO full storyboard (only the H0 wallet card + stats sidebar).
+   Keep minimal, flag for director input, do not invent a full screen.
+
+After both, the storyboard is fully built and `app/api/**` can be handed to the real backend.
+**`docs/handover.md` is the detailed phase-by-phase log + open items — read it next.**
+Conventions, seed facts, and gotchas below remain in force.
+
 ## What Eruja is
 
 A community **group-buying** app for diaspora foods (Yoruba _eroja_ = ingredients).
@@ -74,7 +98,7 @@ Route groups: `(auth)` (shell-less) and `(app)` (shell + auth guard).
 - **Mobile** bottom tab bar: Home `/` · My pools `/me/pools` · Suggest `/suggest` ·
   Wallet `/wallet`. Mobile top bar: logo→`/`, bell→`/notifications`, cart→`/cart`.
 - **Desktop** top nav: Discover · My pools · Suggest · How it works. Right: wallet pill
-  →`/wallet` · hub chip · cart→`/cart`. (No desktop bell — see handover open items.)
+  →`/wallet` · hub chip · bell→`/notifications` · cart→`/cart`. (Desktop bell added in P3.)
 - Active nav state derives from `usePathname()`; the active item carries
   `aria-current="page"`.
 
@@ -88,10 +112,12 @@ Route groups: `(auth)` (shell-less) and `(app)` (shell + auth guard).
   `.seat`/`.bar`/`.timeline`/`.hsteps`/`.notif`/`.badge`/`.stars`/`.fld`/`.wallet-pill`/
   `.stepper`/`.kv`/type & layout helpers/`.appbar`/`.tabbar`/`.web-nav`). Reuse these;
   **invent no new visual system.**
-- Pure SVG primitives in `components/primitives/` (Icon, Avatar, Seat/PoolPeople/
-  AvatarStack, Logo, ProductIllo, Scenes) are deterministic ports — do not redesign.
+- Pure SVG / display primitives in `components/primitives/` (Icon, Avatar, Seat/PoolPeople/
+  AvatarStack, Logo, ProductIllo, Scenes, Progress, PoolCard, Timeline, HSteps, Stars) are
+  deterministic ports — do not redesign. `Stars` is interactive (`onRate`); `Stepper`
+  (`components/app/`) has a `busy` prop that disables it mid-commit.
 - UI/shell primitives from the bundle (`asset_4`) are **not** all ported; port one
-  verbatim only when a phase needs it.
+  verbatim only when a phase needs it (Timeline/HSteps/Stars were ported in P7–P8).
 
 ## Relay-loop conventions
 
@@ -113,6 +139,10 @@ This project runs as a **director ↔ builder relay**. Each phase:
 `window.__eruja` exposes the Zustand store for e2e assertions. It is **env-gated** and
 statically dead-code-eliminated from real prod builds: present only in dev or when
 `NEXT_PUBLIC_E2E=1` (set by Playwright's webServer; defaulted to `'0'` in `next.config.ts`).
+
+**Test isolation:** the shared in-memory store bleeds mutations across tests. A gated
+`POST /api/test/reset` (same `NEXT_PUBLIC_E2E` gate; 404 in real prod) re-seeds it. Every
+mutating spec must `reset → login` in `beforeEach` (helpers live per-spec).
 
 ## Git
 

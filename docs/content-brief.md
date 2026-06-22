@@ -40,6 +40,12 @@ neighbour (an avatar in the "pool of people").
 Values below are the storyboard's; treat seeded API data as the live source. Quotes are
 canonical copy.
 
+**Build status (paused 2026-06-22):** H0–H8 are all **built and live**. Notifications and
+`/wallet` are **not yet built** (next up). A few shipped strings/behaviours were reconciled
+against the contract during the build — when they differ from the storyboard wording below,
+**the shipped version wins** (see notes inline). The detailed phase log is in
+`docs/handover.md`.
+
 - **H0 — Home (`/`).** Returning member opens to wallet + their pools, discover feed
   below. Greeting "Ẹ káàbọ̀ — welcome back" + name. Wallet card (balance, top-up chips
   $20/$50/$100/$200, "Top up"). My-pools tabs "Awaiting · N / In transit · N /
@@ -89,11 +95,28 @@ canonical copy.
   Savings ticker (saved all-time $259 / pools joined 4 / referred 2). "Your next pool?" →
   a hot PoolCard + "Suggest an item". Turns the moment into the next commit.
 
+- _Tracker shipped reconciliations (H4–H7)._ The state bodies bind to the fetched ticket;
+  copy was tightened to be data-bound, so the shipped strings differ from the storyboard's
+  hardcoded mocks: **H5** header "the bag is full" + "Charged ${chargedAmount} · on its way"
+  (HOLD vs CHARGE distinction is real); **H6** "sorted for you" + "Arriving {date}, {slot}",
+  delivery-window card is **gold-soft**; **H7** rating prompt "How was it?", savings "You
+  saved ${savings} on this pool", next-links "Find your next pool" → `/discover` + "Suggest
+  an item" → `/suggest`. Deferred actions (Track cargo / Track courier / Reschedule) are
+  **disabled stubs** — no backing endpoint. Seat add/release rebalances `wallet.held`.
+  Seed: an extra `last_mile` ticket (`t_4790`, Ofada Rice) exists so H6 is exercisable.
+
 - **H8 — Suggest & vote (`/suggest`).** Community-built catalog. "What should we source
   next?" Form (item / hub / category / "Why this? Where could we source it?"). "40 votes =
   pool" badge. Suggestion cards with Vote/Voted toggle + progress ("36 / 40 votes",
   "{n} to go", "opening as a pool 🎊" at threshold). Sort: Trending / Closest to opening /
   Newest. Graduating a suggestion pings every voter first.
+  - _Shipped reconciliations:_ threshold is **data-bound** (not hardcoded 40); graduated copy
+    is **"Now a pool"** + "Graduated — your city is pooling this."; graduation creates **no
+    Pool id**, so graduated cards link to **`/discover`** ("Browse pools →"). The "why" note
+    is captured by the form but **write-only** in the contract (`Suggestion` has no `note`
+    field), so it does not render on cards — flagged for the backend. Screen-local state
+    (suggestions are not in the Zustand store). Sort "Closest" == "Trending" while thresholds
+    are uniform.
 
 - **Notifications (`/notifications`).** Warm, short, specific grid: "You're in the pool!",
   "A friend just joined · Kemi joined your Honey Beans pool", "Halfway there", "It's a

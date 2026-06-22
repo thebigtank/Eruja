@@ -5,6 +5,8 @@ Snapshot for a fresh session. Pair with `CLAUDE.md` (conventions) and
 
 ## Current state
 
+- **Session paused 2026-06-22 after Phase 9 (Suggest/H8).** Resume at **Notifications**, then
+  `/wallet` (see "Recommended next phase"). Storyboard screens H0–H8 are all built + green.
 - Scaffold, design-system port, reference API + contract: **done**.
 - Auth screens (Register + Login): **done**, wired to `/api/auth/*`.
 - IA locked; responsive `(app)` shell + auth guard: **done**.
